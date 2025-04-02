@@ -1,7 +1,7 @@
 #ifndef TABELA_SIMBOLOS_H
 #define TABELA_SIMBOLOS_H
 
-typedef enum Tipo_e {INTEIRO, REAL, VAZIO} Tipo;
+typedef enum Tipo_e {INT, FLOAT} Tipo;
 typedef enum TipoSimbolo_e {VARIAVEL, FUNCAO} TipoSimbolo;
 
 struct simbolo {
@@ -44,4 +44,5 @@ struct simbolo * busca_simbolo(struct tabela_simbolos * ts, char *lexema);
 struct tabela_simbolos * remove_simbolos(struct tabela_simbolos * ts, int escopo);
 
 void imprime_tabela_simbolos(FILE * fp, struct tabela_simbolos * ts);
+
 #endif

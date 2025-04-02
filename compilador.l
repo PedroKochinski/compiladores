@@ -38,7 +38,7 @@ NUM [0-9]+
 "program" { return PROGRAM; }
 "," { return VIRGULA; }
 {ID} { yylval.lexema = strdup(yytext); return ID; }
-\n { return EOL;}
+\n { }
 [ \t] {/*ignorar espacos em branco, incluindo tabs*/}
 
 %%

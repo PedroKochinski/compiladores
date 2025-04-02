@@ -121,9 +121,8 @@ void insere_func_args(struct simbolo * funcao, struct lista_simbolo * args){
 
 void imprime_tipo(FILE *fp, Tipo tipo){
     switch (tipo) {
-        case INTEIRO: fprintf(fp, "int"); break;
-        case REAL: fprintf(fp, "float"); break;
-        case VAZIO: fprintf(fp, "void"); break;
+        case INT: fprintf(fp, "INTEIRO"); break;
+        case FLOAT: fprintf(fp, "REAL"); break;
     }
 }
 void imprime_funcao(FILE *fp, struct simbolo *func){
