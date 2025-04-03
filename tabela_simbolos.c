@@ -123,6 +123,8 @@ void imprime_tipo(FILE *fp, Tipo tipo){
     switch (tipo) {
         case INT: fprintf(fp, "INTEIRO"); break;
         case FLOAT: fprintf(fp, "REAL"); break;
+        case VAZIO: fprintf(fp, "VAZIO"); break;
+
     }
 }
 void imprime_funcao(FILE *fp, struct simbolo *func){
@@ -140,7 +142,7 @@ void imprime_funcao(FILE *fp, struct simbolo *func){
     fprintf(fp, "}\n");
 }
 void imprime_variavel(FILE *fp, struct simbolo *var){
-    fprintf(fp,"VARIAVEL; lexema=%s; escopo=%d; tipo=",var->lexema,var->escopo);
+    fprintf(fp,"VARIAVEL; lexema = %s; escopo = %d; tipo = ",var->lexema,var->escopo);
     imprime_tipo(fp, var->tipo);
     fprintf(fp, "\n");
 }

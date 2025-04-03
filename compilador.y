@@ -34,25 +34,108 @@ int escopo_atual = 0;
 
 PROGRAMA: PROGRAM ID ABRE_PARENTESES LISTA_DE_IDENTIFICADORES FECHA_PARENTESES PONTO_VIRGULA 
   DECLARACOES
+  DECLARACOES_DE_SUBPROGRAMAS
   ;
 
-LISTA_DE_IDENTIFICADORES: ID {$$ = insere_lista_simbolo(NULL, novo_simbolo1($1));}
-    | LISTA_DE_IDENTIFICADORES VIRGULA ID {$$ = insere_lista_simbolo($1, novo_simbolo1($3));}
-    ;
+LISTA_DE_IDENTIFICADORES: ID {$$ = insere_lista_simbolo(NULL, novo_simbolo3($1, VARIAVEL, escopo_atual));}
+  | LISTA_DE_IDENTIFICADORES VIRGULA ID {$$ = insere_lista_simbolo($1, novo_simbolo3($3, VARIAVEL, escopo_atual));}
+  ;
 
 DECLARACOES: DECLARACOES VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO PONTO_VIRGULA {atualiza_tipo_simbolos($3,$5); tab_simbolos = insere_simbolos_ts(tab_simbolos, $3); imprime_tabela_simbolos(log_file, tab_simbolos);}
-           | /* empty */
-           ;
+  | /* empty */
+  ;
 
-TIPO: INTEIRO {$$ = 0;}
-    | REAL {$$ = 1;}
-    ;
+TIPO: INTEIRO {$$ = 0;} /*como numero pq o enum tava conflitando*/
+  | REAL {$$ = 1;}
+  ;
+
+
+DECLARACOES_DE_SUBPROGRAMAS: DECLARACOES_DE_SUBPROGRAMAS DECLARACAO_DE_SUBPROGRAMA PONTO_VIRGULA
+  | /* empty */
+  ;
+
+DECLARACAO_DE_SUBPROGRAMA: CABECALHO_DE_SUBPROGRAMA DECLARACOES ENUNCIADO_COMPOSTO 
+  ;
+
+CABECALHO_DE_SUBPROGRAMA: FUNCTION ID ARGUMENTOS DOIS_PONTOS TIPO PONTO_VIRGULA {
+  insere_simbolo_ts(tab_simbolos, novo_simbolo4($2, FUNCAO, 0, $5));
+  imprime_tabela_simbolos(log_file, tab_simbolos);
+}
+  | PROCEDURE ID ARGUMENTOS PONTO_VIRGULA 
+  ;
+
+ARGUMENTOS: ABRE_PARENTESES LISTA_DE_PARAMETROS FECHA_PARENTESES { }
+  | /* empty */
+  ;
+
+LISTA_DE_PARAMETROS: LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {
+  atualiza_tipo_simbolos($1, $3);
+  tab_simbolos = insere_simbolos_ts(tab_simbolos, $1);
+  }
+  | VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {  }
+  | LISTA_DE_PARAMETROS PONTO_VIRGULA LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO 
+  | LISTA_DE_PARAMETROS PONTO_VIRGULA VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO 
+  ;
+
+
+ENUNCIADO_COMPOSTO: BEGIN_TOKEN ENUNCIADOS_OPCIONAIS END
+                  ;
+
+ENUNCIADOS_OPCIONAIS: LISTA_DE_ENUNCIADOS
+                    | /* empty */
+                    ;
+
+LISTA_DE_ENUNCIADOS: ENUNCIADO
+                   | LISTA_DE_ENUNCIADOS PONTO_VIRGULA ENUNCIADO
+                   ;
+
+ENUNCIADO: VARIAVEL OPERADOR_ATRIBUICAO EXPRESSAO
+         | CHAMADA_DE_PROCEDIMENTO
+         | ENUNCIADO_COMPOSTO
+         | IF EXPRESSAO THEN ENUNCIADO ELSE ENUNCIADO
+         | WHILE EXPRESSAO DO ENUNCIADO 
+         ;
+
+VARIAVEL: ID 
+        ;
+
+CHAMADA_DE_PROCEDIMENTO: ID
+                    | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES
+                    ;
+
+LISTA_DE_EXPRESSOES: EXPRESSAO
+                   | LISTA_DE_EXPRESSOES VIRGULA EXPRESSAO
+                   ;
+
+EXPRESSAO: EXPRESSAO_SIMPLES
+         | EXPRESSAO_SIMPLES OPERADOR_RELACIONAL EXPRESSAO_SIMPLES
+         ;
+
+EXPRESSAO_SIMPLES: TERMO
+                 | SINAL TERMO  
+                 | EXPRESSAO_SIMPLES MAIS EXPRESSAO_SIMPLES 
+                 | EXPRESSAO_SIMPLES MENOS EXPRESSAO_SIMPLES 
+                 | EXPRESSAO_SIMPLES OR EXPRESSAO_SIMPLES 
+                 ;
+
+TERMO: FATOR
+     | TERMO OPERADOR_MULTIPLICATIVO FATOR
+     ;
+
+FATOR: ID
+     | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES
+     | NUM 
+     | ABRE_PARENTESES EXPRESSAO FECHA_PARENTESES 
+     ;
+
+SINAL: MAIS
+     | MENOS 
+     ;
 
 %%
 
 int main(int argc, char ** argv) {
   log_file = fopen ("compilador.log", "w");
-  printf("> ");
   yyparse();
   return 0;
 }

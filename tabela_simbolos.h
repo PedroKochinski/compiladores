@@ -1,7 +1,7 @@
 #ifndef TABELA_SIMBOLOS_H
 #define TABELA_SIMBOLOS_H
 
-typedef enum Tipo_e {INT, FLOAT} Tipo;
+typedef enum Tipo_e {INT, FLOAT, VAZIO} Tipo;
 typedef enum TipoSimbolo_e {VARIAVEL, FUNCAO} TipoSimbolo;
 
 struct simbolo {

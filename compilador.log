@@ -1,6 +1,26 @@
 --------------TS--------------
-VARIAVEL; lexema=y; escopo=0; tipo=INTEIRO
+VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO
 ---------------
-VARIAVEL; lexema=x; escopo=0; tipo=INTEIRO
+VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO
+---------------
+--------------FIM-TS----------
+--------------TS--------------
+VARIAVEL; lexema = z; escopo = 0; tipo = REAL
+---------------
+VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO
+---------------
+VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO
+---------------
+--------------FIM-TS----------
+--------------TS--------------
+VARIAVEL; lexema = b; escopo = 0; tipo = INTEIRO
+---------------
+VARIAVEL; lexema = a; escopo = 0; tipo = INTEIRO
+---------------
+VARIAVEL; lexema = z; escopo = 0; tipo = REAL
+---------------
+VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO
+---------------
+VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO
 ---------------
 --------------FIM-TS----------
