@@ -25,12 +25,22 @@ struct simbolo * novo_simbolo3(char *lexema, TipoSimbolo tipo_simb, int escopo){
     novo->escopo = escopo;
     return novo;
 }
+
 struct simbolo * novo_simbolo4(char *lexema, TipoSimbolo tipo_simb, int escopo, Tipo tipo){
     struct simbolo * novo = malloc(sizeof(struct simbolo));
     novo->lexema = lexema;
     novo->tipo_simb = tipo_simb;
     novo->escopo = escopo;
     novo->tipo = tipo;
+    return novo;
+}
+
+struct simbolo * novo_simbolo5(char *lexema, TipoSimbolo tipo_simb, int escopo, char *id_funcao){
+    struct simbolo * novo = malloc(sizeof(struct simbolo));
+    novo->lexema = lexema;
+    novo->tipo_simb = tipo_simb;
+    novo->escopo = escopo;
+    novo->id_funcao = id_funcao;
     return novo;
 }
 
@@ -64,7 +74,7 @@ void free_lista_simbolo(struct lista_simbolo * lista){
 }
 struct tabela_simbolos * insere_simbolo_ts(struct tabela_simbolos * ts, struct simbolo * simb){
     struct simbolo *simb_busca = busca_simbolo(ts, simb->lexema);
-    if(simb_busca != NULL && simb_busca->escopo == simb->escopo){
+    if(simb_busca != NULL && simb_busca->escopo == simb->escopo && simb_busca->id_funcao == simb->id_funcao){
         char erro[500];
         sprintf(erro, "simbolo '%s' ja declarado antes", simb->lexema);
         yyerror(erro);
@@ -144,6 +154,10 @@ void imprime_funcao(FILE *fp, struct simbolo *func){
 void imprime_variavel(FILE *fp, struct simbolo *var){
     fprintf(fp,"VARIAVEL; lexema = %s; escopo = %d; tipo = ",var->lexema,var->escopo);
     imprime_tipo(fp, var->tipo);
+    if(var->id_funcao != NULL)
+        fprintf(fp, "; id_funcao = %s", var->id_funcao);
+    else
+        fprintf(fp, "; id_funcao = NULL");
     fprintf(fp, "\n");
 }
 void imprime_tabela_simbolos(FILE *fp, struct tabela_simbolos * ts){

@@ -5,3 +5,7 @@ function plus (a,b: integer): integer;
 begin
     plus := a + b
 end;
+function menos (a,b: integer): integer;
+begin
+    menos := a + b
+end;

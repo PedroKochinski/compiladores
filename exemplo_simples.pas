@@ -5,6 +5,10 @@ function plus (a,b: integer): integer;
 begin
     plus := a + b
 end;
+function menos (a,b: integer): integer;
+begin
+    plus := a + b
+end;
 begin
     read(x);
     y := 3;

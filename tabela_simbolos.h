@@ -6,6 +6,7 @@ typedef enum TipoSimbolo_e {VARIAVEL, FUNCAO} TipoSimbolo;
 
 struct simbolo {
     char * lexema;
+    char * id_funcao;
     Tipo tipo;
     TipoSimbolo tipo_simb;
     int escopo;
@@ -35,9 +36,9 @@ struct simbolo * novo_simbolo4(char *lexema, TipoSimbolo tipo_simb, int escopo, 
 
 struct lista_simbolo * insere_lista_simbolo(struct lista_simbolo * lista, struct simbolo * simb);
 void atualiza_tipo_simbolos(struct lista_simbolo * lista, Tipo t);
+struct simbolo * novo_simbolo5(char *lexema, TipoSimbolo tipo_simb, int escopo, char *id_funcao);
 void insere_func_args(struct simbolo * funcao, struct lista_simbolo * args);
 void free_lista_simbolo(struct lista_simbolo * lista);
-
 struct tabela_simbolos * insere_simbolo_ts(struct tabela_simbolos * ts, struct simbolo * simb);
 struct tabela_simbolos * insere_simbolos_ts(struct tabela_simbolos * ts, struct lista_simbolo * lista);
 struct simbolo * busca_simbolo(struct tabela_simbolos * ts, char *lexema);

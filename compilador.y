@@ -11,6 +11,7 @@ FILE *log_file, *out_file;
 
 struct tabela_simbolos * tab_simbolos = NULL;
 int escopo_atual = 0;
+char *nome_funcao_atual = "GLOBAL";
 %}
 
 %define parse.error detailed
@@ -27,6 +28,8 @@ int escopo_atual = 0;
 %type <tipo>TIPO
 
 %type <lista_s> LISTA_DE_IDENTIFICADORES
+%type <lista_s> ARGUMENTOS
+%type <lista_s> LISTA_DE_PARAMETROS
 %left '+' '-'
 %left '*' '/'
 
@@ -37,8 +40,8 @@ PROGRAMA: PROGRAM ID ABRE_PARENTESES LISTA_DE_IDENTIFICADORES FECHA_PARENTESES P
   DECLARACOES_DE_SUBPROGRAMAS
   ;
 
-LISTA_DE_IDENTIFICADORES: ID {$$ = insere_lista_simbolo(NULL, novo_simbolo3($1, VARIAVEL, escopo_atual));}
-  | LISTA_DE_IDENTIFICADORES VIRGULA ID {$$ = insere_lista_simbolo($1, novo_simbolo3($3, VARIAVEL, escopo_atual));}
+LISTA_DE_IDENTIFICADORES: ID {$$ = insere_lista_simbolo(NULL, novo_simbolo5($1, VARIAVEL, escopo_atual, nome_funcao_atual));}
+  | LISTA_DE_IDENTIFICADORES VIRGULA ID {$$ = insere_lista_simbolo($1, novo_simbolo5($3, VARIAVEL, escopo_atual, nome_funcao_atual));}
   ;
 
 DECLARACOES: DECLARACOES VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO PONTO_VIRGULA {atualiza_tipo_simbolos($3,$5); tab_simbolos = insere_simbolos_ts(tab_simbolos, $3); imprime_tabela_simbolos(log_file, tab_simbolos);}
@@ -50,27 +53,28 @@ TIPO: INTEIRO {$$ = 0;} /*como numero pq o enum tava conflitando*/
   ;
 
 
-DECLARACOES_DE_SUBPROGRAMAS: DECLARACOES_DE_SUBPROGRAMAS DECLARACAO_DE_SUBPROGRAMA PONTO_VIRGULA
+DECLARACOES_DE_SUBPROGRAMAS: DECLARACOES_DE_SUBPROGRAMAS DECLARACAO_DE_SUBPROGRAMA PONTO_VIRGULA {--escopo_atual; nome_funcao_atual = "GLOBAL";}
   | /* empty */
   ;
 
 DECLARACAO_DE_SUBPROGRAMA: CABECALHO_DE_SUBPROGRAMA DECLARACOES ENUNCIADO_COMPOSTO 
   ;
 
-CABECALHO_DE_SUBPROGRAMA: FUNCTION ID ARGUMENTOS DOIS_PONTOS TIPO PONTO_VIRGULA {
-  insere_simbolo_ts(tab_simbolos, novo_simbolo4($2, FUNCAO, 0, $5));
+CABECALHO_DE_SUBPROGRAMA: FUNCTION {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS DOIS_PONTOS TIPO PONTO_VIRGULA {
+  tab_simbolos = insere_simbolo_ts(tab_simbolos, novo_simbolo4($3, FUNCAO, 0, $7));
   imprime_tabela_simbolos(log_file, tab_simbolos);
 }
   | PROCEDURE ID ARGUMENTOS PONTO_VIRGULA 
   ;
 
-ARGUMENTOS: ABRE_PARENTESES LISTA_DE_PARAMETROS FECHA_PARENTESES { }
+ARGUMENTOS: ABRE_PARENTESES LISTA_DE_PARAMETROS FECHA_PARENTESES { $$ = $2;}
   | /* empty */
   ;
 
 LISTA_DE_PARAMETROS: LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {
   atualiza_tipo_simbolos($1, $3);
   tab_simbolos = insere_simbolos_ts(tab_simbolos, $1);
+  $$ = $1;
   }
   | VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {  }
   | LISTA_DE_PARAMETROS PONTO_VIRGULA LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO 
