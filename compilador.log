@@ -1,48 +1,28 @@
 --------------TS--------------
-VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO; id_funcao = GLOBAL
+VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO; id_funcao = SEM_ESCOPO_FUNCAO
 ---------------
-VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_funcao = GLOBAL
----------------
---------------FIM-TS----------
---------------TS--------------
-VARIAVEL; lexema = z; escopo = 0; tipo = REAL; id_funcao = GLOBAL
----------------
-VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO; id_funcao = GLOBAL
----------------
-VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_funcao = GLOBAL
+VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_funcao = SEM_ESCOPO_FUNCAO
 ---------------
 --------------FIM-TS----------
 --------------TS--------------
-FUNCAO; lexema=plus; escopo=0; tipo=INTEIRO; args:{}
+VARIAVEL; lexema = z; escopo = 0; tipo = REAL; id_funcao = SEM_ESCOPO_FUNCAO
+---------------
+VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO; id_funcao = SEM_ESCOPO_FUNCAO
+---------------
+VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_funcao = SEM_ESCOPO_FUNCAO
+---------------
+--------------FIM-TS----------
+--------------TS--------------
+PROCEDURE; lexema = plus; escopo = 0; tipo = VAZIO; args:{VAZIO, INTEIRO, INTEIRO, REAL, INTEIRO, INTEIRO}
 ---------------
 VARIAVEL; lexema = b; escopo = 1; tipo = INTEIRO; id_funcao = plus
 ---------------
 VARIAVEL; lexema = a; escopo = 1; tipo = INTEIRO; id_funcao = plus
 ---------------
-VARIAVEL; lexema = z; escopo = 0; tipo = REAL; id_funcao = GLOBAL
+VARIAVEL; lexema = z; escopo = 0; tipo = REAL; id_funcao = SEM_ESCOPO_FUNCAO
 ---------------
-VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO; id_funcao = GLOBAL
+VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO; id_funcao = SEM_ESCOPO_FUNCAO
 ---------------
-VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_funcao = GLOBAL
----------------
---------------FIM-TS----------
---------------TS--------------
-FUNCAO; lexema=menos; escopo=0; tipo=INTEIRO; args:{}
----------------
-VARIAVEL; lexema = b; escopo = 1; tipo = INTEIRO; id_funcao = menos
----------------
-VARIAVEL; lexema = a; escopo = 1; tipo = INTEIRO; id_funcao = menos
----------------
-FUNCAO; lexema=plus; escopo=0; tipo=INTEIRO; args:{}
----------------
-VARIAVEL; lexema = b; escopo = 1; tipo = INTEIRO; id_funcao = plus
----------------
-VARIAVEL; lexema = a; escopo = 1; tipo = INTEIRO; id_funcao = plus
----------------
-VARIAVEL; lexema = z; escopo = 0; tipo = REAL; id_funcao = GLOBAL
----------------
-VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO; id_funcao = GLOBAL
----------------
-VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_funcao = GLOBAL
+VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_funcao = SEM_ESCOPO_FUNCAO
 ---------------
 --------------FIM-TS----------

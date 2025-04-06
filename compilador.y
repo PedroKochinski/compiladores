@@ -11,7 +11,8 @@ FILE *log_file, *out_file;
 
 struct tabela_simbolos * tab_simbolos = NULL;
 int escopo_atual = 0;
-char *nome_funcao_atual = "GLOBAL";
+char *nome_funcao_atual = "SEM_ESCOPO_FUNCAO";
+struct lista_simbolo *arg_atual;
 %}
 
 %define parse.error detailed
@@ -53,18 +54,25 @@ TIPO: INTEIRO {$$ = 0;} /*como numero pq o enum tava conflitando*/
   ;
 
 
-DECLARACOES_DE_SUBPROGRAMAS: DECLARACOES_DE_SUBPROGRAMAS DECLARACAO_DE_SUBPROGRAMA PONTO_VIRGULA {--escopo_atual; nome_funcao_atual = "GLOBAL";}
+DECLARACOES_DE_SUBPROGRAMAS: DECLARACOES_DE_SUBPROGRAMAS DECLARACAO_DE_SUBPROGRAMA PONTO_VIRGULA {--escopo_atual; nome_funcao_atual = "SEM_ESCOPO_FUNCAO";}
   | /* empty */
   ;
 
 DECLARACAO_DE_SUBPROGRAMA: CABECALHO_DE_SUBPROGRAMA DECLARACOES ENUNCIADO_COMPOSTO 
   ;
 
-CABECALHO_DE_SUBPROGRAMA: FUNCTION {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS DOIS_PONTOS TIPO PONTO_VIRGULA {
-  tab_simbolos = insere_simbolo_ts(tab_simbolos, novo_simbolo4($3, FUNCAO, 0, $7));
+CABECALHO_DE_SUBPROGRAMA: FUNCTION {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS {if($5 == NULL) printf("vazio\n");} DOIS_PONTOS TIPO PONTO_VIRGULA {
+  struct simbolo *nova_funcao = novo_simbolo4($3, FUNCAO, 0, $8);
+  tab_simbolos = insere_simbolo_ts(tab_simbolos, nova_funcao);
+  insere_func_args(nova_funcao, arg_atual);
   imprime_tabela_simbolos(log_file, tab_simbolos);
-}
-  | PROCEDURE ID ARGUMENTOS PONTO_VIRGULA 
+  }
+  | PROCEDURE {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS {arg_atual = $5;} PONTO_VIRGULA {
+  struct simbolo *nova_procedure = novo_simbolo4($3, PROC, 0, VAZIO);
+  tab_simbolos = insere_simbolo_ts(tab_simbolos, nova_procedure);
+  insere_func_args(nova_procedure, arg_atual);
+  imprime_tabela_simbolos(log_file, tab_simbolos);
+  }
   ;
 
 ARGUMENTOS: ABRE_PARENTESES LISTA_DE_PARAMETROS FECHA_PARENTESES { $$ = $2;}
@@ -145,6 +153,6 @@ int main(int argc, char ** argv) {
 }
 
 int yyerror(const char *s){
-  fprintf(stderr, "Erro: %s\n", s);
+  fprintf(stderr, "Erro: %s Line: %d\n", s, yylineno);
   return 0;
 }
