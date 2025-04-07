@@ -21,17 +21,22 @@ struct lista_simbolo *arg_atual = NULL;
 %union {
     char *lexema;
     struct lista_simbolo * lista_s;
+    struct expressao * expr;
+    struct lista_expressoes * lista_expr;
     Tipo tipo;
 }
 
-%token PROGRAM ABRE_PARENTESES FECHA_PARENTESES PONTO_VIRGULA VIRGULA OPERADOR_MULTIPLICATIVO INTEIRO REAL
-%token OR MENOS MAIS OPERADOR_RELACIONAL EOL PONTO_FINAL VAR FUNCTION PROCEDURE DOIS_PONTOS BEGIN_TOKEN END IF THEN ELSE DO WHILE OPERADOR_ATRIBUICAO
-%token <lexema> ID <lexema> NUM
+%token PROGRAM ABRE_PARENTESES FECHA_PARENTESES PONTO_VIRGULA VIRGULA INTEIRO REAL
+%token OR OPERADOR_RELACIONAL EOL PONTO_FINAL VAR FUNCTION PROCEDURE DOIS_PONTOS BEGIN_TOKEN END IF THEN ELSE DO WHILE OPERADOR_ATRIBUICAO
+%token <lexema> ID <lexema> NUM <lexema> OPERADOR_MULTIPLICATIVO <lexema> MAIS <lexema> MENOS
 %type <tipo>TIPO
-
 %type <lista_s> LISTA_DE_IDENTIFICADORES
 %type <lista_s> ARGUMENTOS
 %type <lista_s> LISTA_DE_PARAMETROS
+%type <expr> VARIAVEL <expr> FATOR <expr> TERMO <expr> EXPRESSAO <expr> EXPRESSAO_SIMPLES
+%type <lexema> SINAL
+/* %type <expr> EXPRESSAO <expr> FATOR <expr> TERMO <expr> EXPRESSAO_SIMPLES <expr> ENUNCIADO
+%type <lista_expr> LISTA_DE_EXPRESSOES */
 %left '+' '-'
 %left '*' '/'
 
@@ -65,7 +70,12 @@ TIPO: INTEIRO {$$ = 0;} /*como numero pq o enum tava conflitando*/
   ;
 
 
-DECLARACOES_DE_SUBPROGRAMAS: DECLARACOES_DE_SUBPROGRAMAS DECLARACAO_DE_SUBPROGRAMA PONTO_VIRGULA {--escopo_atual; nome_funcao_atual = "SEM_ESCOPO_FUNCAO";}
+DECLARACOES_DE_SUBPROGRAMAS: DECLARACOES_DE_SUBPROGRAMAS DECLARACAO_DE_SUBPROGRAMA PONTO_VIRGULA {
+  tab_simbolos = remove_simbolos(tab_simbolos, escopo_atual);
+  --escopo_atual;
+  nome_funcao_atual = "SEM_ESCOPO_FUNCAO";
+  imprime_tabela_simbolos(log_file, tab_simbolos);
+  }
   | /* empty */
   ;
 
@@ -77,14 +87,14 @@ CABECALHO_DE_SUBPROGRAMA: FUNCTION {++escopo_atual;} ID {nome_funcao_atual = $3;
   tab_simbolos = insere_simbolo_ts(tab_simbolos, nova_funcao);
   insere_func_args(nova_funcao, $5);
   tab_simbolos = insere_simbolos_ts(tab_simbolos, $5);
-  imprime_tabela_simbolos(log_file, tab_simbolos);
+  // imprime_tabela_simbolos(log_file, tab_simbolos);
   }
   | PROCEDURE {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS PONTO_VIRGULA {
   struct simbolo *nova_procedure = novo_simbolo4($3, PROC, 0, VAZIO);
   tab_simbolos = insere_simbolo_ts(tab_simbolos, nova_procedure);
   insere_func_args(nova_procedure, $5);
   tab_simbolos = insere_simbolos_ts(tab_simbolos, $5);
-  imprime_tabela_simbolos(log_file, tab_simbolos);
+  // imprime_tabela_simbolos(log_file, tab_simbolos);
   }
   ;
 
@@ -113,14 +123,17 @@ LISTA_DE_ENUNCIADOS: ENUNCIADO
                    | LISTA_DE_ENUNCIADOS PONTO_VIRGULA ENUNCIADO
                    ;
 
-ENUNCIADO: VARIAVEL OPERADOR_ATRIBUICAO EXPRESSAO
+ENUNCIADO: VARIAVEL OPERADOR_ATRIBUICAO EXPRESSAO {printf("Atribuicao: %s = %s\n", $1->lexema, $3->lexema);}
          | CHAMADA_DE_PROCEDIMENTO
          | ENUNCIADO_COMPOSTO
          | IF EXPRESSAO THEN ENUNCIADO ELSE ENUNCIADO
          | WHILE EXPRESSAO DO ENUNCIADO 
          ;
 
-VARIAVEL: ID 
+VARIAVEL: ID {
+          if(strcmp(nome_funcao_atual, $1) == 0) $$ = nova_expressao($1, RETORNO); // retorno da funcao
+          else $$ = nova_expressao2(tab_simbolos, $1, VARIAVEL, escopo_atual); // variavel
+        }
         ;
 
 CHAMADA_DE_PROCEDIMENTO: ID
@@ -131,29 +144,46 @@ LISTA_DE_EXPRESSOES: EXPRESSAO
                    | LISTA_DE_EXPRESSOES VIRGULA EXPRESSAO
                    ;
 
-EXPRESSAO: EXPRESSAO_SIMPLES
+EXPRESSAO: EXPRESSAO_SIMPLES {$$ = $1;}
          | EXPRESSAO_SIMPLES OPERADOR_RELACIONAL EXPRESSAO_SIMPLES
          ;
 
-EXPRESSAO_SIMPLES: TERMO
-                 | SINAL TERMO  
-                 | EXPRESSAO_SIMPLES MAIS EXPRESSAO_SIMPLES 
-                 | EXPRESSAO_SIMPLES MENOS EXPRESSAO_SIMPLES 
-                 | EXPRESSAO_SIMPLES OR EXPRESSAO_SIMPLES 
+EXPRESSAO_SIMPLES: TERMO { $$ = $1; } 
+                 | SINAL TERMO {}
+                 | EXPRESSAO_SIMPLES MAIS EXPRESSAO_SIMPLES { 
+                   printf("EXPRESSAO_SIMPLES: %s %s %s\n", $1->lexema, $2, $3->lexema);
+                   $$ = nova_expressao_operador_aditivo($1, $3, $2);
+                 }
+                 | EXPRESSAO_SIMPLES MENOS EXPRESSAO_SIMPLES {
+                    printf("EXPRESSAO_SIMPLES: %s %s %s\n", $1->lexema, $2, $3->lexema);
+                    $$ = nova_expressao_operador_aditivo($1, $3, $2);
+                 }
+                 | EXPRESSAO_SIMPLES OR EXPRESSAO_SIMPLES { }
                  ;
 
-TERMO: FATOR
-     | TERMO OPERADOR_MULTIPLICATIVO FATOR
+TERMO: FATOR {
+        $$ = $1;
+      }
+     | TERMO OPERADOR_MULTIPLICATIVO FATOR {
+       printf("TERMO: %s %s %s\n", $1->lexema, $2, $3->lexema);
+      $$ = nova_expressao_operador_multiplicativo($1, $3, $2);
+      
+     }
      ;
 
-FATOR: ID
+FATOR: ID {
+       $$ = nova_expressao($1, VARIAVEL); 
+      }
      | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES
-     | NUM 
-     | ABRE_PARENTESES EXPRESSAO FECHA_PARENTESES 
+     | NUM {
+      $$ = nova_expressao_int($1, VARIAVEL); } // verificar como adicionar o tipo certo
+     | ABRE_PARENTESES EXPRESSAO FECHA_PARENTESES {
+        
+      }
      ;
 
-SINAL: MAIS
-     | MENOS 
+SINAL: MAIS {$$ = $1;}
+     | MENOS {$$ = $1;}
      ;
 
 %%

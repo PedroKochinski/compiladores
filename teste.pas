@@ -1,11 +1,8 @@
 program simples (input, output);
 var x,y: integer;
 function plus (a,b: integer): integer;
-var a1, a2: real;
+var c, d: real;
 begin
-    plus := a + b
-end;
-procedure minus (a,b: integer);
-begin
+    c := 5 * 1;
     plus := a + b
 end;

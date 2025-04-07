@@ -6,16 +6,15 @@
 #include "compilador.tab.h"
 %}
 
+NUM  [0-9]+(\.[0-9]+)?([Ee][+-]?[0-9]+)?
 ID [a-zA-Z][a-zA-Z1-9]*
-NUM [0-9]+
-
 %%
 
-{NUM} { return NUM; }
-"*"|"/"|"div"|"mod"|"and" { return OPERADOR_MULTIPLICATIVO; }
+{NUM} { yylval.lexema = strdup(yytext);return NUM; }
+"*"|"/"|"div"|"mod"|"and" { yylval.lexema = strdup(yytext);return OPERADOR_MULTIPLICATIVO; }
 "or" { return OR; }
-"-" { return MENOS; }
-"+" { return MAIS; }
+"-" { yylval.lexema = strdup(yytext); return MENOS; }
+"+" { yylval.lexema = strdup(yytext);return MAIS; }
 "="|"<>"|">"|">="|"<"|"<=" { return OPERADOR_RELACIONAL; }
 ":=" { return OPERADOR_ATRIBUICAO; }
 "do" { return DO; }

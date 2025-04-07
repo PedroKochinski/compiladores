@@ -44,6 +44,90 @@ struct simbolo *novo_simbolo5(char *lexema, TipoSimbolo tipo_simb, int escopo,
     return novo;
 }
 
+struct expressao *nova_expressao(char *lexema, TipoSimbolo tipo_simb) {
+    struct expressao *novo = malloc(sizeof(struct expressao));
+    novo->lexema = lexema;
+    novo->tipo_simb = tipo_simb;
+    return novo;
+}
+
+struct expressao *nova_expressao2(struct tabela_simbolos *ts, char *lexema, TipoSimbolo tipo_simb, int escopo) {
+    struct simbolo *aux = busca_simbolo(ts, lexema);
+    if (aux == NULL) {
+        char erro[500];
+        sprintf(erro, "simbolo '%s' nao declarado", lexema);
+        yyerror(erro);
+        exit(1);
+    } else if (aux->escopo != escopo) {
+        char erro[500];
+        sprintf(erro, "simbolo '%s' nao declarado nesse escopo", lexema);
+        yyerror(erro);
+        exit(1);
+    }
+    struct expressao *novo = malloc(sizeof(struct expressao));
+    novo->lexema = lexema;
+    novo->tipo_simb = tipo_simb;
+    return novo;
+}
+
+struct expressao * nova_expressao_int(char* valor_int, TipoSimbolo tipo_simb) {
+    struct expressao *novo = malloc(sizeof(struct expressao));
+    novo->valor_int = atoi(valor_int);
+    novo->valor_float = atof(valor_int);
+    novo->lexema = valor_int;
+    novo->tipo_simb = tipo_simb;
+    return novo;
+}
+struct expressao *nova_expressao_float(float valor_float,
+                                        TipoSimbolo tipo_simb) {
+    struct expressao *novo = malloc(sizeof(struct expressao));
+    novo->valor_float = valor_float;
+    novo->tipo_simb = tipo_simb;
+    return novo;
+}
+
+struct expressao *nova_expressao_operador_multiplicativo(
+    struct expressao *esq, struct expressao *dir, char *operador) {
+    struct expressao *novo = malloc(sizeof(struct expressao));
+    novo->lexema = strcat(strcat(strcat(strcat(esq->lexema, " "), operador), " "), dir->lexema);
+    if(strcmp(operador, "*") == 0) {
+        novo->valor_int = esq->valor_int * dir->valor_int; // verificar se os tipos batem
+    } else if (strcmp(operador, "/") == 0) { // Em C, se ambos os operandos forem int, o resultado é inteiro
+        novo->valor_float = esq->valor_float / dir->valor_float; 
+    } else if (strcmp(operador, "mod") == 0) {
+        novo->valor_int = esq->valor_int % dir->valor_int; 
+    } else if (strcmp(operador, "div") == 0) {
+        novo->valor_int = esq->valor_int / dir->valor_int;  // Mesmo operador, mas só funciona como div se os operandos forem inteiros
+    } else if (strcmp(operador, "and") == 0) { // bitwise and
+        novo->valor_int = esq->valor_int & dir->valor_int; 
+    } else {
+        char erro[500];
+        sprintf(erro, "operador '%s' invalido", operador);
+        yyerror(erro);
+        exit(1);
+    }
+    return novo;
+}
+
+struct expressao *nova_expressao_operador_aditivo(
+    struct expressao *esq, struct expressao *dir, char *operador) {
+    struct expressao *novo = malloc(sizeof(struct expressao));
+    novo->lexema = strcat(strcat(strcat(strcat(esq->lexema, " "), operador), " "), dir->lexema);
+    if (strcmp(operador, "+") == 0) {
+        novo->valor_int = esq->valor_int + dir->valor_int; // verificar se os tipos batem
+    } else if (strcmp(operador, "-") == 0) {
+        novo->valor_int = esq->valor_int - dir->valor_int;
+    } else if (strcmp(operador, "or") == 0) { // bitwise or
+        novo->valor_int = esq->valor_int | dir->valor_int; 
+    } else {
+        char erro[500];
+        sprintf(erro, "operador '%s' invalido", operador);
+        yyerror(erro);
+        exit(1);
+    }
+    return novo;
+}
+
 struct lista_simbolo *insere_lista_simbolo(struct lista_simbolo *lista,
                                            struct simbolo *simb) {
     // insere no final
@@ -199,5 +283,4 @@ void imprime_lista_simbolos(FILE *fp, struct lista_simbolo *lista) {
         fprintf(fp, "---------------\n");
     }
     fprintf(fp, "--------------FIM-LISTA SIMBOLOS----------\n");
-    
 }
