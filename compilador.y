@@ -12,7 +12,8 @@ FILE *log_file, *out_file;
 struct tabela_simbolos * tab_simbolos = NULL;
 int escopo_atual = 0;
 char *nome_funcao_atual = "SEM_ESCOPO_FUNCAO";
-struct lista_simbolo *arg_atual;
+struct lista_simbolo *lista_identificadores = NULL;
+struct lista_simbolo *arg_atual = NULL;
 %}
 
 %define parse.error detailed
@@ -41,11 +42,21 @@ PROGRAMA: PROGRAM ID ABRE_PARENTESES LISTA_DE_IDENTIFICADORES FECHA_PARENTESES P
   DECLARACOES_DE_SUBPROGRAMAS
   ;
 
-LISTA_DE_IDENTIFICADORES: ID {$$ = insere_lista_simbolo(NULL, novo_simbolo5($1, VARIAVEL, escopo_atual, nome_funcao_atual));}
-  | LISTA_DE_IDENTIFICADORES VIRGULA ID {$$ = insere_lista_simbolo($1, novo_simbolo5($3, VARIAVEL, escopo_atual, nome_funcao_atual));}
+LISTA_DE_IDENTIFICADORES: ID {
+  lista_identificadores = insere_lista_simbolo(NULL, novo_simbolo5($1, VARIAVEL, escopo_atual, nome_funcao_atual));
+  $$ = lista_identificadores;
+  }
+  | LISTA_DE_IDENTIFICADORES VIRGULA ID {
+    lista_identificadores = insere_lista_simbolo($1, novo_simbolo5($3, VARIAVEL, escopo_atual, nome_funcao_atual));
+    $$ = lista_identificadores;
+    }
   ;
 
-DECLARACOES: DECLARACOES VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO PONTO_VIRGULA {atualiza_tipo_simbolos($3,$5); tab_simbolos = insere_simbolos_ts(tab_simbolos, $3); imprime_tabela_simbolos(log_file, tab_simbolos);}
+DECLARACOES: DECLARACOES VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO PONTO_VIRGULA {
+  atualiza_tipo_simbolos($3,$5);
+  tab_simbolos = insere_simbolos_ts(tab_simbolos, $3);
+  imprime_tabela_simbolos(log_file, tab_simbolos);
+  }
   | /* empty */
   ;
 
@@ -61,16 +72,18 @@ DECLARACOES_DE_SUBPROGRAMAS: DECLARACOES_DE_SUBPROGRAMAS DECLARACAO_DE_SUBPROGRA
 DECLARACAO_DE_SUBPROGRAMA: CABECALHO_DE_SUBPROGRAMA DECLARACOES ENUNCIADO_COMPOSTO 
   ;
 
-CABECALHO_DE_SUBPROGRAMA: FUNCTION {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS {if($5 == NULL) printf("vazio\n");} DOIS_PONTOS TIPO PONTO_VIRGULA {
-  struct simbolo *nova_funcao = novo_simbolo4($3, FUNCAO, 0, $8);
+CABECALHO_DE_SUBPROGRAMA: FUNCTION {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS DOIS_PONTOS TIPO PONTO_VIRGULA {
+  struct simbolo *nova_funcao = novo_simbolo4($3, FUNCAO, 0, $7);
   tab_simbolos = insere_simbolo_ts(tab_simbolos, nova_funcao);
-  insere_func_args(nova_funcao, arg_atual);
+  insere_func_args(nova_funcao, $5);
+  tab_simbolos = insere_simbolos_ts(tab_simbolos, $5);
   imprime_tabela_simbolos(log_file, tab_simbolos);
   }
-  | PROCEDURE {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS {arg_atual = $5;} PONTO_VIRGULA {
+  | PROCEDURE {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS PONTO_VIRGULA {
   struct simbolo *nova_procedure = novo_simbolo4($3, PROC, 0, VAZIO);
   tab_simbolos = insere_simbolo_ts(tab_simbolos, nova_procedure);
-  insere_func_args(nova_procedure, arg_atual);
+  insere_func_args(nova_procedure, $5);
+  tab_simbolos = insere_simbolos_ts(tab_simbolos, $5);
   imprime_tabela_simbolos(log_file, tab_simbolos);
   }
   ;
@@ -81,7 +94,6 @@ ARGUMENTOS: ABRE_PARENTESES LISTA_DE_PARAMETROS FECHA_PARENTESES { $$ = $2;}
 
 LISTA_DE_PARAMETROS: LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {
   atualiza_tipo_simbolos($1, $3);
-  tab_simbolos = insere_simbolos_ts(tab_simbolos, $1);
   $$ = $1;
   }
   | VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {  }

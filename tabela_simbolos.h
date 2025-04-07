@@ -4,8 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef enum Tipo_e { INT, FLOAT, VAZIO } Tipo;
-typedef enum TipoSimbolo_e { VARIAVEL, FUNCAO, PROC } TipoSimbolo;
+typedef enum Tipo_e { INT,
+                      FLOAT,
+                      VAZIO } Tipo;
+typedef enum TipoSimbolo_e { VARIAVEL,
+                             FUNCAO,
+                             PROC } TipoSimbolo;
 
 struct simbolo {
     char *lexema;
@@ -18,6 +22,7 @@ struct simbolo {
 
 struct lista_args {
     Tipo tipo;
+    char *lexema;
     struct lista_args *proximo;
 };
 
@@ -53,5 +58,5 @@ struct simbolo *busca_simbolo(struct tabela_simbolos *ts, char *lexema);
 struct tabela_simbolos *remove_simbolos(struct tabela_simbolos *ts, int escopo);
 
 void imprime_tabela_simbolos(FILE *fp, struct tabela_simbolos *ts);
-
+void imprime_lista_simbolos(FILE *fp, struct lista_simbolo *lista);
 #endif

@@ -75,7 +75,7 @@ struct tabela_simbolos *insere_simbolo_ts(struct tabela_simbolos *ts,
                                           struct simbolo *simb) {
     struct simbolo *simb_busca = busca_simbolo(ts, simb->lexema);
     if (simb_busca != NULL && simb_busca->escopo == simb->escopo &&
-        simb_busca->id_funcao == simb->id_funcao) {
+        strcmp(simb_busca->id_funcao, simb->id_funcao) == 0) {
         char erro[500];
         sprintf(erro, "simbolo '%s' ja declarado antes", simb->lexema);
         yyerror(erro);
@@ -121,6 +121,7 @@ void insere_func_args(struct simbolo *funcao, struct lista_simbolo *args) {
     while (args != NULL) {
         novo = malloc(sizeof(struct lista_args));
         novo->tipo = args->simb->tipo;
+        novo->lexema = args->simb->lexema;
         novo->proximo = NULL;
         if (funcao->args == NULL)
             funcao->args = novo;
@@ -155,6 +156,7 @@ void imprime_funcao(FILE *fp, struct simbolo *func) {
     fprintf(fp, "; args:{");
     struct lista_args *args = func->args;
     while (args != NULL) {
+        fprintf(fp, "%s: ", args->lexema);
         imprime_tipo(fp, args->tipo);
         if (args->proximo != NULL) {
             fprintf(fp, ", ");
@@ -184,4 +186,18 @@ void imprime_tabela_simbolos(FILE *fp, struct tabela_simbolos *ts) {
         fprintf(fp, "---------------\n");
     }
     fprintf(fp, "--------------FIM-TS----------\n");
+}
+
+void imprime_lista_simbolos(FILE *fp, struct lista_simbolo *lista) {
+    fprintf(fp, "--------------LISTA SIMBOLOS--------------\n");
+    while (lista != NULL) {
+        if (lista->simb->tipo_simb == FUNCAO || lista->simb->tipo_simb == PROC)
+            imprime_funcao(fp, lista->simb);
+        else
+            imprime_variavel(fp, lista->simb);
+        lista = lista->proximo;
+        fprintf(fp, "---------------\n");
+    }
+    fprintf(fp, "--------------FIM-LISTA SIMBOLOS----------\n");
+    
 }
