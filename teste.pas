@@ -1,8 +1,14 @@
 program simples (input, output);
 var x,y: integer;
 function plus (a,b: integer): integer;
-var c, d: real;
 begin
-    c := 5 * 1;
+    a := a + 1 * 3 - 2;
+    b := b + 1;
     plus := a + b
+end;
+function minus(c,d: integer): integer;
+begin
+    c := plus(c, 1);
+    d := plus(d, 1);
+    minus := c - d
 end;

@@ -13,7 +13,7 @@ struct tabela_simbolos * tab_simbolos = NULL;
 int escopo_atual = 0;
 char *nome_funcao_atual = "SEM_ESCOPO_FUNCAO";
 struct lista_simbolo *lista_identificadores = NULL;
-struct lista_simbolo *arg_atual = NULL;
+struct lista_expressoes *lista_expressoes_atual = NULL;
 %}
 
 %define parse.error detailed
@@ -34,6 +34,7 @@ struct lista_simbolo *arg_atual = NULL;
 %type <lista_s> ARGUMENTOS
 %type <lista_s> LISTA_DE_PARAMETROS
 %type <expr> VARIAVEL <expr> FATOR <expr> TERMO <expr> EXPRESSAO <expr> EXPRESSAO_SIMPLES
+%type <lista_expr> LISTA_DE_EXPRESSOES
 %type <lexema> SINAL
 /* %type <expr> EXPRESSAO <expr> FATOR <expr> TERMO <expr> EXPRESSAO_SIMPLES <expr> ENUNCIADO
 %type <lista_expr> LISTA_DE_EXPRESSOES */
@@ -123,7 +124,7 @@ LISTA_DE_ENUNCIADOS: ENUNCIADO
                    | LISTA_DE_ENUNCIADOS PONTO_VIRGULA ENUNCIADO
                    ;
 
-ENUNCIADO: VARIAVEL OPERADOR_ATRIBUICAO EXPRESSAO {printf("Atribuicao: %s = %s\n", $1->lexema, $3->lexema);}
+ENUNCIADO: VARIAVEL OPERADOR_ATRIBUICAO EXPRESSAO {printf("ENUNCIADO: %s := %s\n", $1->lexema, $3->lexema);}
          | CHAMADA_DE_PROCEDIMENTO
          | ENUNCIADO_COMPOSTO
          | IF EXPRESSAO THEN ENUNCIADO ELSE ENUNCIADO
@@ -140,9 +141,14 @@ CHAMADA_DE_PROCEDIMENTO: ID
                     | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES
                     ;
 
-LISTA_DE_EXPRESSOES: EXPRESSAO
-                   | LISTA_DE_EXPRESSOES VIRGULA EXPRESSAO
-                   ;
+LISTA_DE_EXPRESSOES: EXPRESSAO { lista_expressoes_atual = insere_lista_expressoes(NULL, $1);
+                     $$ = lista_expressoes_atual; 
+                     }  
+                    | LISTA_DE_EXPRESSOES VIRGULA EXPRESSAO {
+                      lista_expressoes_atual = insere_lista_expressoes($1, $3);
+                      $$ = lista_expressoes_atual;
+                    }
+                    ;
 
 EXPRESSAO: EXPRESSAO_SIMPLES {$$ = $1;}
          | EXPRESSAO_SIMPLES OPERADOR_RELACIONAL EXPRESSAO_SIMPLES
@@ -172,9 +178,9 @@ TERMO: FATOR {
      ;
 
 FATOR: ID {
-       $$ = nova_expressao($1, VARIAVEL); 
+       $$ = nova_expressao($1, VARIAVEL); // variavel ou funcao
       }
-     | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES
+     | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES {executar_funcao(tab_simbolos, $1, $3);}
      | NUM {
       $$ = nova_expressao_int($1, VARIAVEL); } // verificar como adicionar o tipo certo
      | ABRE_PARENTESES EXPRESSAO FECHA_PARENTESES {
