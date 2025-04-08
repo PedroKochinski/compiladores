@@ -52,7 +52,8 @@ struct expressao *nova_expressao(char *lexema, TipoSimbolo tipo_simb) {
     return novo;
 }
 
-struct expressao *nova_expressao2(struct tabela_simbolos *ts, char *lexema, TipoSimbolo tipo_simb, int escopo) {
+struct expressao *nova_expressao2(struct tabela_simbolos *ts, char *lexema,
+                                  TipoSimbolo tipo_simb, int escopo) {
     struct simbolo *aux = busca_simbolo(ts, lexema);
     if (aux == NULL) {
         char erro[500];
@@ -87,19 +88,27 @@ struct expressao *nova_expressao_float(float valor_float,
     return novo;
 }
 
-struct expressao *nova_expressao_operador_multiplicativo(
-    struct expressao *esq, struct expressao *dir, char *operador) {
+struct expressao *nova_expressao_operador_multiplicativo(struct expressao *esq,
+                                                         struct expressao *dir,
+                                                         char *operador) {
     struct expressao *novo = malloc(sizeof(struct expressao));
-    novo->lexema = strcat(strcat(strcat(strcat(esq->lexema, " "), operador), " "), dir->lexema);
+    novo->lexema = strcat(
+        strcat(strcat(strcat(esq->lexema, " "), operador), " "), dir->lexema);
     if (strcmp(operador, "*") == 0) {
-        novo->valor_int = esq->valor_int * dir->valor_int;  // verificar se os tipos batem
-    } else if (strcmp(operador, "/") == 0) {                // Em C, se ambos os operandos forem int, o resultado é inteiro
+        novo->valor_int =
+            esq->valor_int * dir->valor_int;  // verificar se os tipos batem
+    } else if (strcmp(operador, "/") ==
+               0) {  // Em C, se ambos os operandos forem int, o resultado é
+                     // inteiro
         novo->valor_float = esq->valor_float / dir->valor_float;
     } else if (strcmp(operador, "mod") == 0) {
         novo->valor_int = esq->valor_int % dir->valor_int;
     } else if (strcmp(operador, "div") == 0) {
-        novo->valor_int = esq->valor_int / dir->valor_int;  // Mesmo operador, mas só funciona como div se os operandos forem inteiros
-    } else if (strcmp(operador, "and") == 0) {              // bitwise and
+        novo->valor_int =
+            esq->valor_int /
+            dir->valor_int;  // Mesmo operador, mas só funciona como div se os
+                             // operandos forem inteiros
+    } else if (strcmp(operador, "and") == 0) {  // bitwise and
         novo->valor_int = esq->valor_int & dir->valor_int;
     } else {
         char erro[500];
@@ -110,12 +119,15 @@ struct expressao *nova_expressao_operador_multiplicativo(
     return novo;
 }
 
-struct expressao *nova_expressao_operador_aditivo(
-    struct expressao *esq, struct expressao *dir, char *operador) {
+struct expressao *nova_expressao_operador_aditivo(struct expressao *esq,
+                                                  struct expressao *dir,
+                                                  char *operador) {
     struct expressao *novo = malloc(sizeof(struct expressao));
-    novo->lexema = strcat(strcat(strcat(strcat(esq->lexema, " "), operador), " "), dir->lexema);
+    novo->lexema = strcat(
+        strcat(strcat(strcat(esq->lexema, " "), operador), " "), dir->lexema);
     if (strcmp(operador, "+") == 0) {
-        novo->valor_int = esq->valor_int + dir->valor_int;  // verificar se os tipos batem
+        novo->valor_int =
+            esq->valor_int + dir->valor_int;  // verificar se os tipos batem
     } else if (strcmp(operador, "-") == 0) {
         novo->valor_int = esq->valor_int - dir->valor_int;
     } else if (strcmp(operador, "or") == 0) {  // bitwise or
@@ -129,10 +141,11 @@ struct expressao *nova_expressao_operador_aditivo(
     return novo;
 }
 
-struct lista_expressoes *insere_lista_expressoes(
-    struct lista_expressoes *lista, struct expressao *exp) {
+struct lista_expressoes *insere_lista_expressoes(struct lista_expressoes *lista,
+                                                 struct expressao *exp) {
     // insere no final
-    struct lista_expressoes *aux, *novo = malloc(sizeof(struct lista_expressoes));
+    struct lista_expressoes *aux,
+        *novo = malloc(sizeof(struct lista_expressoes));
     novo->exp = exp;
     novo->proximo = NULL;
     if (lista == NULL) {
@@ -159,19 +172,6 @@ struct lista_simbolo *insere_lista_simbolo(struct lista_simbolo *lista,
     return lista;
 }
 
-struct expressao *executar_funcao(struct tabela_simbolos *ts, char *func_id,
-                                  struct lista_expressoes *args) {
-    tratar_erro_funcao(ts, func_id, args);
-    struct simbolo *funcao = busca_simbolo(ts, func_id);
-    struct expressao *novo = malloc(sizeof(struct expressao));
-    while(args != NULL) {
-        funcao->args->lexema = args->exp->lexema;
-        funcao->args->tipo = args->exp->tipo;
-        args = args->proximo;
-        funcao->args = funcao->args->proximo; 
-    }
-}
-
 void tratar_erro_funcao(struct tabela_simbolos *ts, char *func_id,
                         struct lista_expressoes *args) {
     struct simbolo *funcao = busca_simbolo(ts, func_id);
@@ -187,12 +187,15 @@ void tratar_erro_funcao(struct tabela_simbolos *ts, char *func_id,
         yyerror(erro);
         exit(1);
     }
-    struct lista_simbolo *arg = funcao->args;
+    struct lista_args *arg = funcao->args;
     struct lista_expressoes *arg2 = args;
     while (arg != NULL && arg2 != NULL) {
-        if (arg->simb->tipo != arg2->exp->tipo) {
+        if (arg->tipo != arg2->exp->tipo) {
             char erro[500];
-            sprintf(erro, "argumento '%s' da funcao '%s' tem tipo diferente do esperado", arg->simb->lexema, func_id);
+            sprintf(
+                erro,
+                "argumento '%s' da funcao '%s' tem tipo diferente do esperado",
+                arg->lexema, func_id);
             yyerror(erro);
             exit(1);
         }
@@ -205,12 +208,28 @@ void tratar_erro_funcao(struct tabela_simbolos *ts, char *func_id,
         yyerror(erro);
         exit(1);
     }
+
     if (arg2 != NULL) {
         char erro[500];
-        sprintf(erro, "funcao '%s' recebeu mais argumentos do que o esperado", func_id);
+        sprintf(erro, "funcao '%s' recebeu mais argumentos do que o esperado",
+                func_id);
         yyerror(erro);
         exit(1);
     }
+}
+
+struct expressao *executar_funcao(struct tabela_simbolos *ts, char *func_id,
+                                  struct lista_expressoes *args) {
+    tratar_erro_funcao(ts, func_id, args);
+    struct simbolo *funcao = busca_simbolo(ts, func_id);
+    struct expressao *novo = malloc(sizeof(struct expressao));
+    while (args != NULL) {
+        funcao->args->lexema = args->exp->lexema;
+        funcao->args->tipo = args->exp->tipo;
+        args = args->proximo;
+        funcao->args = funcao->args->proximo;
+    }
+    return novo;
 }
 
 void atualiza_tipo_simbolos(struct lista_simbolo *lista, Tipo t) {
@@ -225,6 +244,16 @@ void free_lista_simbolo(struct lista_simbolo *lista) {
     free_lista_simbolo(lista->proximo);
     free(lista);
 }
+
+struct lista_simbolo *concatena_lista_simbolos(struct lista_simbolo *lista1,
+											   struct lista_simbolo *lista2) {
+	if (lista1 == NULL) return lista2;
+	struct lista_simbolo *aux = lista1;
+	while (aux->proximo != NULL) aux = aux->proximo;
+	aux->proximo = lista2;
+	return lista1;
+}
+
 struct tabela_simbolos *insere_simbolo_ts(struct tabela_simbolos *ts,
                                           struct simbolo *simb) {
     struct simbolo *simb_busca = busca_simbolo(ts, simb->lexema);
@@ -323,6 +352,7 @@ void imprime_variavel(FILE *fp, struct simbolo *var) {
     fprintf(fp, "VARIAVEL; lexema = %s; escopo = %d; tipo = ", var->lexema,
             var->escopo);
     imprime_tipo(fp, var->tipo);
+	fprintf(fp, "; id_llvm = %d", var->id_llvm);
     if (var->id_funcao != NULL)
         fprintf(fp, "; id_funcao = %s", var->id_funcao);
     else
@@ -353,4 +383,60 @@ void imprime_lista_simbolos(FILE *fp, struct lista_simbolo *lista) {
         fprintf(fp, "---------------\n");
     }
     fprintf(fp, "--------------FIM-LISTA SIMBOLOS----------\n");
+}
+
+void materializa_funcao(FILE *fp, struct simbolo *funcao,
+						int *contador_simbolos) {
+	(*contador_simbolos)++;
+	struct lista_args *aux = funcao->args;
+	if (funcao->tipo_simb == FUNCAO){
+		if(funcao->tipo == INT){
+			fprintf(fp, "define i32 @%s(", funcao->lexema);
+			while(funcao->args != NULL){
+				fprintf(fp, "%s %%%s", funcao->args->tipo == INT ? "i32" : "float", funcao->args->lexema);
+				funcao->args = funcao->args->proximo;
+				if(funcao->args != NULL)
+					fprintf(fp, ", ");
+			}
+			fprintf(fp, ") {\n");
+		}
+		else if(funcao->tipo == FLOAT){
+			fprintf(fp, "define float @%s(", funcao->lexema);
+			while(funcao->args != NULL){
+				fprintf(fp, "%s %%%s", funcao->args->tipo == INT ? "i32" : "float", funcao->args->lexema);
+				funcao->args = funcao->args->proximo;
+				if(funcao->args != NULL)
+				fprintf(fp, ", ");
+			}
+			fprintf(fp, ") {\n");
+		}
+	}
+	funcao->args = aux;
+	fprintf(fp, "\n");
+	funcao->id_llvm = *contador_simbolos;
+}
+
+void materializa_simbolos(FILE *fp, struct lista_simbolo *lista,
+                          int *contador_simbolos) {
+    while (lista != NULL) {
+        (*contador_simbolos)++;
+        if (lista->simb->tipo_simb == VARIAVEL) {
+            if (lista->simb->tipo == INT) {
+                if (lista->simb->escopo == 0)  // variavel global alocada dinamicamente
+                {
+                    fprintf(fp, "@%d = global i32 %d\n", *contador_simbolos, lista->simb->valor_int);
+					lista->simb->id_llvm = *contador_simbolos;
+                } else  // variavel local
+                    fprintf(fp, "%d: %s\n", *contador_simbolos,
+                            lista->simb->lexema);
+
+            } else if (lista->simb->tipo == FLOAT)
+                fprintf(fp, "simbolo %d: %s\n", *contador_simbolos,
+                        lista->simb->lexema);
+        } else  // retorno da funcao
+            fprintf(fp, "simbolo %d: %s\n", *contador_simbolos,
+                    lista->simb->lexema);
+		fprintf(fp, "\n");
+        lista = lista->proximo;
+    }
 }

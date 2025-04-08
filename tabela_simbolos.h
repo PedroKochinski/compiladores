@@ -15,6 +15,9 @@ typedef enum TipoSimbolo_e { VARIAVEL,
 struct simbolo {
     char *lexema;
     char *id_funcao;
+    int id_llvm;
+    int valor_int;
+    float valor_float;
     Tipo tipo;
     TipoSimbolo tipo_simb;
     int escopo;
@@ -69,6 +72,8 @@ struct lista_expressoes *insere_lista_expressoes(struct lista_expressoes *lista,
 
 struct lista_simbolo *insere_lista_simbolo(struct lista_simbolo *lista,
                                            struct simbolo *simb);
+struct lista_simbolo *concatena_lista_simbolos(struct lista_simbolo *lista1,
+                                              struct lista_simbolo *lista2);
 void atualiza_tipo_simbolos(struct lista_simbolo *lista, Tipo t);
 struct simbolo *novo_simbolo5(char *lexema, TipoSimbolo tipo_simb, int escopo,
                               char *id_funcao);
@@ -80,7 +85,8 @@ struct tabela_simbolos *insere_simbolos_ts(struct tabela_simbolos *ts,
                                            struct lista_simbolo *lista);
 struct simbolo *busca_simbolo(struct tabela_simbolos *ts, char *lexema);
 struct tabela_simbolos *remove_simbolos(struct tabela_simbolos *ts, int escopo);
-
+void materializa_simbolos(FILE *fp, struct lista_simbolo *lista, int* contador_simbolos);
+void materializa_funcao(FILE *fp, struct simbolo *funcao, int *contador_simbolos);
 void imprime_tabela_simbolos(FILE *fp, struct tabela_simbolos *ts);
 void imprime_lista_simbolos(FILE *fp, struct lista_simbolo *lista);
 #endif

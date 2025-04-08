@@ -14,6 +14,7 @@ int escopo_atual = 0;
 char *nome_funcao_atual = "SEM_ESCOPO_FUNCAO";
 struct lista_simbolo *lista_identificadores = NULL;
 struct lista_expressoes *lista_expressoes_atual = NULL;
+int contador_simbolos = 0;
 %}
 
 %define parse.error detailed
@@ -60,6 +61,7 @@ LISTA_DE_IDENTIFICADORES: ID {
 
 DECLARACOES: DECLARACOES VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO PONTO_VIRGULA {
   atualiza_tipo_simbolos($3,$5);
+  materializa_simbolos(out_file, $3, &contador_simbolos);
   tab_simbolos = insere_simbolos_ts(tab_simbolos, $3);
   imprime_tabela_simbolos(log_file, tab_simbolos);
   }
@@ -87,6 +89,7 @@ CABECALHO_DE_SUBPROGRAMA: FUNCTION {++escopo_atual;} ID {nome_funcao_atual = $3;
   struct simbolo *nova_funcao = novo_simbolo4($3, FUNCAO, 0, $7);
   tab_simbolos = insere_simbolo_ts(tab_simbolos, nova_funcao);
   insere_func_args(nova_funcao, $5);
+  materializa_funcao(out_file, nova_funcao, &contador_simbolos);
   tab_simbolos = insere_simbolos_ts(tab_simbolos, $5);
   // imprime_tabela_simbolos(log_file, tab_simbolos);
   }
@@ -94,6 +97,7 @@ CABECALHO_DE_SUBPROGRAMA: FUNCTION {++escopo_atual;} ID {nome_funcao_atual = $3;
   struct simbolo *nova_procedure = novo_simbolo4($3, PROC, 0, VAZIO);
   tab_simbolos = insere_simbolo_ts(tab_simbolos, nova_procedure);
   insere_func_args(nova_procedure, $5);
+  materializa_funcao(out_file, nova_procedure, &contador_simbolos);
   tab_simbolos = insere_simbolos_ts(tab_simbolos, $5);
   // imprime_tabela_simbolos(log_file, tab_simbolos);
   }
@@ -108,8 +112,11 @@ LISTA_DE_PARAMETROS: LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {
   $$ = $1;
   }
   | VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {  }
-  | LISTA_DE_PARAMETROS PONTO_VIRGULA LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO 
-  | LISTA_DE_PARAMETROS PONTO_VIRGULA VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO 
+  | LISTA_DE_PARAMETROS PONTO_VIRGULA LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {
+    atualiza_tipo_simbolos($3, $5);
+     $$ = concatena_lista_simbolos($1, $3);
+  }
+  | LISTA_DE_PARAMETROS PONTO_VIRGULA VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {}
   ;
 
 
@@ -180,7 +187,7 @@ TERMO: FATOR {
 FATOR: ID {
        $$ = nova_expressao($1, VARIAVEL); // variavel ou funcao
       }
-     | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES {executar_funcao(tab_simbolos, $1, $3);}
+     | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES { }
      | NUM {
       $$ = nova_expressao_int($1, VARIAVEL); } // verificar como adicionar o tipo certo
      | ABRE_PARENTESES EXPRESSAO FECHA_PARENTESES {
@@ -196,6 +203,7 @@ SINAL: MAIS {$$ = $1;}
 
 int main(int argc, char ** argv) {
   log_file = fopen ("compilador.log", "w");
+  out_file = fopen ("saida.ll", "w");
   yyparse();
   return 0;
 }
