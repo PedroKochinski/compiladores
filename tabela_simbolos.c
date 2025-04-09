@@ -1,8 +1,9 @@
 
 #include "tabela_simbolos.h"
-
+#include<ctype.h>
+#include<stdio.h>
 #include "compilador.h"
-
+FILE* fout = NULL;
 struct simbolo *novo_simbolo1(char *lexema) {
   struct simbolo *novo = malloc(sizeof(struct simbolo));
   novo->lexema = lexema;
@@ -124,15 +125,28 @@ struct expressao *nova_expressao_operador_aditivo(struct expressao *esq, struct 
   struct expressao *novo = malloc(sizeof(struct expressao));
   int tamanho = snprintf(NULL, 0, "add float %.2f %.2f", esq->valor_float, dir->valor_float); // conta o tamanho da string a ser escrita
   char *saida_llvm = malloc(tamanho + 1);
-  
+  char buffer_esq[500];
+  char buffer_dir[500];
+  struct simbolo * simbolo_esq = busca_simbolo(esq->id_tabela, esq->lexema);
+  struct simbolo * simbolo_dir = busca_simbolo(dir->id_tabela, dir->lexema);
+  if (!fout)
+      fout = stdout;
   if (esq->tipo == INT && dir->tipo == INT) {
-    
-    sprintf(saida_llvm, "add i32 %s %s", esq->lexema, dir->lexema);
+    if(esq->tipo_simb == VARIAVEL){
+      if(simbolo_esq->escopo == 0) sprintf(buffer_esq, "@%s", esq->lexema);
+      else sprintf(buffer_esq, "%%%s", esq->lexema);
+    } else if(esq->tipo_simb == NUMERO) sprintf(buffer_esq, "%s", esq->lexema);
+    if(dir->tipo_simb == VARIAVEL){
+      if(simbolo_dir->escopo == 0) sprintf(buffer_dir, "@%s", dir->lexema);
+      else sprintf(buffer_dir, "%%%s", dir->lexema);
+    } else if(dir->tipo_simb == NUMERO) sprintf(buffer_dir, "%s", dir->lexema);
+    sprintf(saida_llvm, "add i32 %s %s", buffer_esq, buffer_dir);
     novo->lexema = saida_llvm;
-    novo->valor_int = esq->valor_int + dir->valor_int;
+    novo->tipo = INT;
   } else if (esq->tipo == FLOAT && dir->tipo == FLOAT) {
     sprintf(saida_llvm, "add float %f %f", esq->valor_float, dir->valor_float);
     novo->lexema = saida_llvm;
+    novo->tipo = FLOAT;
   } else {
     char erro[500];
     sprintf(erro, "operacao '%s' entre tipos diferentes", operador);
@@ -144,6 +158,7 @@ struct expressao *nova_expressao_operador_aditivo(struct expressao *esq, struct 
     novo->valor_float = esq->valor_float + dir->valor_float;
   } else if (strcmp(operador, "-") == 0) {
     novo->valor_int = esq->valor_int - dir->valor_int;
+    novo->valor_float = esq->valor_float - dir->valor_float;
   } else if (strcmp(operador, "or") == 0) { // bitwise or
     novo->valor_int = esq->valor_int | dir->valor_int;
   } else {
@@ -356,7 +371,8 @@ void imprime_funcao(FILE *fp, struct simbolo *func) {
   fprintf(fp, "}\n");
 }
 void imprime_variavel(FILE *fp, struct simbolo *var) {
-  fprintf(fp, "VARIAVEL; lexema = %s; escopo = %d; tipo = ", var->lexema,
+  if(var->tipo == NUMERO) fprintf(fp, "NUMERO; lexema = %s; escopo = %d; tipo = ", var->lexema, var->escopo);
+  else fprintf(fp, "VARIAVEL; lexema = %s; escopo = %d; tipo = ", var->lexema,
           var->escopo);
   imprime_tipo(fp, var->tipo);
   fprintf(fp, "; id_llvm = %d", var->id_llvm);
@@ -394,6 +410,7 @@ void imprime_lista_simbolos(FILE *fp, struct lista_simbolo *lista) {
 
 void materializa_atribuicao(FILE *fp, struct expressao *esq, struct expressao *dir) {
   struct simbolo *simb_esq = busca_simbolo(esq->id_tabela, esq->lexema);
+  struct simbolo *simb_dir = busca_simbolo(dir->id_tabela, dir->lexema);
   if (simb_esq == NULL) {
     char erro[500];
     sprintf(erro, "simbolo '%s' nao declarado", esq->lexema);
@@ -407,8 +424,17 @@ void materializa_atribuicao(FILE *fp, struct expressao *esq, struct expressao *d
     exit(1);
   }
   char buffer_llvm[500];
-  sprintf(buffer_llvm, "\t%%%s = %s", simb_esq->lexema, dir->lexema);
-  fprintf(fp, "%s\n", buffer_llvm);
+  if (simb_dir != NULL) {
+    if(simb_dir->escopo == 0) sprintf(buffer_llvm, "\t%%%s = @%s", simb_esq->lexema, dir->lexema);
+    else sprintf(buffer_llvm, "\t%%%s = %s", simb_esq->lexema, dir->lexema);
+    fprintf(fp, "%s\n", buffer_llvm); 
+  } 
+  else {
+    sprintf(buffer_llvm, "\t%%%s = %s", simb_esq->lexema, dir->lexema);
+    fprintf(fp, "%s\n", buffer_llvm);
+  }
+  
+
 }
 
 void materializa_funcao(FILE *fp, struct lista_simbolo *args, struct simbolo *funcao, int *contador_simbolos) {
@@ -451,7 +477,7 @@ void materializa_simbolos(FILE *fp, struct lista_simbolo *lista,
     if (lista->simb->tipo_simb == VARIAVEL) {
       if (lista->simb->tipo == INT) {
         if (lista->simb->escopo == 0) { // variavel global alocada dinamicamente
-          fprintf(fp, "@%d = global i32 %d\n", *contador_simbolos, lista->simb->valor_int);
+          fprintf(fp, "@%s = global i32 %d\n", lista->simb->lexema, lista->simb->valor_int);
           lista->simb->id_llvm = *contador_simbolos;
         } else { // variavel local
           fprintf(fp, "\t%%%s = i32, %d\n", lista->simb->lexema, lista->simb->valor_int);

@@ -178,12 +178,12 @@ EXPRESSAO: EXPRESSAO_SIMPLES {$$ = $1;}
 EXPRESSAO_SIMPLES: TERMO { $$ = $1; } 
                  | SINAL TERMO {}
                  | EXPRESSAO_SIMPLES MAIS EXPRESSAO_SIMPLES { 
-                   printf("EXPRESSAO_SIMPLES: %s %s %s\n", $1->lexema, $2, $3->lexema);
+                  //  printf("EXPRESSAO_SIMPLES: %s %s %s\n", $1->lexema, $2, $3->lexema);
                   //  emite_operador_aditivo(&contador_simbolos, $1, $3, $2);
                    $$ = nova_expressao_operador_aditivo($1, $3, $2);
                  }
                  | EXPRESSAO_SIMPLES MENOS EXPRESSAO_SIMPLES {
-                    printf("EXPRESSAO_SIMPLES: %s %s %s\n", $1->lexema, $2, $3->lexema);
+                    // printf("EXPRESSAO_SIMPLES: %s %s %s\n", $1->lexema, $2, $3->lexema);
                   //  materializa_soma(out_file, &contador_simbolos, $1, $3, $2);
                     $$ = nova_expressao_operador_aditivo($1, $3, $2);
                  }
@@ -214,10 +214,10 @@ FATOR: ID {
      | NUM {
         struct simbolo *s = busca_simbolo(tab_simbolos, $1);
         if(s == NULL) {
-          struct simbolo *s = novo_simbolo5($1, VARIAVEL, escopo_atual, nome_funcao_atual);
+          struct simbolo *s = novo_simbolo5($1, NUMERO, escopo_atual, nome_funcao_atual);
           tab_simbolos = insere_simbolo_ts(tab_simbolos, s);
         }
-        struct expressao *nova = nova_expressao($1, VARIAVEL);
+        struct expressao *nova = nova_expressao($1, NUMERO);
         nova->id_tabela = tab_simbolos;
         $$ = nova; // verificar como adicionar o tipo certo
       }
