@@ -5,7 +5,13 @@ VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_llvm = 1; id_funcao = SEM_E
 ---------------
 --------------FIM-TS----------
 --------------TS--------------
-FUNCAO; lexema = plus; escopo = 0; tipo = INTEIRO; args:{a: INTEIRO, b: INTEIRO}
+VARIAVEL; lexema = res; escopo = 1; tipo = INTEIRO; id_llvm = 6; id_funcao = plus
+---------------
+VARIAVEL; lexema = b; escopo = 1; tipo = INTEIRO; id_llvm = 5; id_funcao = plus
+---------------
+VARIAVEL; lexema = a; escopo = 1; tipo = INTEIRO; id_llvm = 4; id_funcao = plus
+---------------
+FUNCAO; lexema = plus; id_llvm = 3, escopo = 0; tipo = INTEIRO; args:{a: INTEIRO, b: INTEIRO}
 ---------------
 VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO; id_llvm = 2; id_funcao = SEM_ESCOPO_FUNCAO
 ---------------
@@ -13,9 +19,17 @@ VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_llvm = 1; id_funcao = SEM_E
 ---------------
 --------------FIM-TS----------
 --------------TS--------------
-FUNCAO; lexema = minus; escopo = 0; tipo = REAL; args:{c: INTEIRO, d: INTEIRO, e: REAL}
+FUNCAO; lexema = plus; id_llvm = 3, escopo = 0; tipo = INTEIRO; args:{a: INTEIRO, b: INTEIRO}
 ---------------
-FUNCAO; lexema = plus; escopo = 0; tipo = INTEIRO; args:{a: INTEIRO, b: INTEIRO}
+VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO; id_llvm = 2; id_funcao = SEM_ESCOPO_FUNCAO
+---------------
+VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_llvm = 1; id_funcao = SEM_ESCOPO_FUNCAO
+---------------
+--------------FIM-TS----------
+--------------TS--------------
+FUNCAO; lexema = minus; id_llvm = 7, escopo = 0; tipo = REAL; args:{c: INTEIRO, d: INTEIRO, e: REAL}
+---------------
+FUNCAO; lexema = plus; id_llvm = 3, escopo = 0; tipo = INTEIRO; args:{a: INTEIRO, b: INTEIRO}
 ---------------
 VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO; id_llvm = 2; id_funcao = SEM_ESCOPO_FUNCAO
 ---------------

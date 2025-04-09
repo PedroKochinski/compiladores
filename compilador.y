@@ -88,16 +88,16 @@ DECLARACAO_DE_SUBPROGRAMA: CABECALHO_DE_SUBPROGRAMA DECLARACOES ENUNCIADO_COMPOS
 CABECALHO_DE_SUBPROGRAMA: FUNCTION {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS DOIS_PONTOS TIPO PONTO_VIRGULA {
   struct simbolo *nova_funcao = novo_simbolo4($3, FUNCAO, 0, $7);
   tab_simbolos = insere_simbolo_ts(tab_simbolos, nova_funcao);
+  materializa_funcao(out_file, $5, nova_funcao, &contador_simbolos);
   insere_func_args(nova_funcao, $5);
-  materializa_funcao(out_file, nova_funcao, &contador_simbolos);
   tab_simbolos = insere_simbolos_ts(tab_simbolos, $5);
-  // imprime_tabela_simbolos(log_file, tab_simbolos);
+  // imprime_tabela_simbolos(stdout, tab_simbolos);
   }
   | PROCEDURE {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS PONTO_VIRGULA {
   struct simbolo *nova_procedure = novo_simbolo4($3, PROC, 0, VAZIO);
   tab_simbolos = insere_simbolo_ts(tab_simbolos, nova_procedure);
+  materializa_funcao(out_file, $5, nova_procedure, &contador_simbolos);
   insere_func_args(nova_procedure, $5);
-  materializa_funcao(out_file, nova_procedure, &contador_simbolos);
   tab_simbolos = insere_simbolos_ts(tab_simbolos, $5);
   // imprime_tabela_simbolos(log_file, tab_simbolos);
   }
@@ -120,7 +120,7 @@ LISTA_DE_PARAMETROS: LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {
   ;
 
 
-ENUNCIADO_COMPOSTO: BEGIN_TOKEN ENUNCIADOS_OPCIONAIS END
+ENUNCIADO_COMPOSTO: BEGIN_TOKEN ENUNCIADOS_OPCIONAIS END {fprintf(out_file, "}\n");}
                   ;
 
 ENUNCIADOS_OPCIONAIS: LISTA_DE_ENUNCIADOS
@@ -131,7 +131,10 @@ LISTA_DE_ENUNCIADOS: ENUNCIADO
                    | LISTA_DE_ENUNCIADOS PONTO_VIRGULA ENUNCIADO
                    ;
 
-ENUNCIADO: VARIAVEL OPERADOR_ATRIBUICAO EXPRESSAO {printf("ENUNCIADO: %s := %s\n", $1->lexema, $3->lexema);}
+ENUNCIADO: VARIAVEL OPERADOR_ATRIBUICAO EXPRESSAO {
+          printf("ENUNCIADO: %s := %s\n", $1->lexema, $3->lexema);
+          materializa_atribuicao(out_file, $1, $3);
+          }
          | CHAMADA_DE_PROCEDIMENTO
          | ENUNCIADO_COMPOSTO
          | IF EXPRESSAO THEN ENUNCIADO ELSE ENUNCIADO
@@ -139,8 +142,19 @@ ENUNCIADO: VARIAVEL OPERADOR_ATRIBUICAO EXPRESSAO {printf("ENUNCIADO: %s := %s\n
          ;
 
 VARIAVEL: ID {
-          if(strcmp(nome_funcao_atual, $1) == 0) $$ = nova_expressao($1, RETORNO); // retorno da funcao
-          else $$ = nova_expressao2(tab_simbolos, $1, VARIAVEL, escopo_atual); // variavel
+          // if(strcmp(nome_funcao_atual, $1) == 0) $$ = nova_expressao($1, RETORNO); // retorno da funcao
+          // else $$ = nova_expressao2(tab_simbolos, $1, VARIAVEL, escopo_atual); // variavel
+
+          struct simbolo *s = busca_simbolo(tab_simbolos, $1);
+          if(s == NULL) {
+            struct simbolo *s = novo_simbolo5($1, VARIAVEL, escopo_atual, nome_funcao_atual);
+            tab_simbolos = insere_simbolo_ts(tab_simbolos, s);
+          }
+          struct expressao *nova;
+          if(strcmp(nome_funcao_atual, $1) == 0) nova = nova_expressao($1, RETORNO); // retorno da funcao
+          else nova = nova_expressao2(tab_simbolos, $1, VARIAVEL, escopo_atual); // variavel
+          nova->id_tabela = tab_simbolos;
+          $$ = nova; // variavel ou funcao
         }
         ;
 
@@ -165,10 +179,12 @@ EXPRESSAO_SIMPLES: TERMO { $$ = $1; }
                  | SINAL TERMO {}
                  | EXPRESSAO_SIMPLES MAIS EXPRESSAO_SIMPLES { 
                    printf("EXPRESSAO_SIMPLES: %s %s %s\n", $1->lexema, $2, $3->lexema);
+                  //  emite_operador_aditivo(&contador_simbolos, $1, $3, $2);
                    $$ = nova_expressao_operador_aditivo($1, $3, $2);
                  }
                  | EXPRESSAO_SIMPLES MENOS EXPRESSAO_SIMPLES {
                     printf("EXPRESSAO_SIMPLES: %s %s %s\n", $1->lexema, $2, $3->lexema);
+                  //  materializa_soma(out_file, &contador_simbolos, $1, $3, $2);
                     $$ = nova_expressao_operador_aditivo($1, $3, $2);
                  }
                  | EXPRESSAO_SIMPLES OR EXPRESSAO_SIMPLES { }
@@ -185,11 +201,26 @@ TERMO: FATOR {
      ;
 
 FATOR: ID {
-       $$ = nova_expressao($1, VARIAVEL); // variavel ou funcao
+      struct simbolo *s = busca_simbolo(tab_simbolos, $1);
+      if(s == NULL) {
+        struct simbolo *s = novo_simbolo5($1, VARIAVEL, escopo_atual, nome_funcao_atual);
+        tab_simbolos = insere_simbolo_ts(tab_simbolos, s);
+      }
+      struct expressao *nova = nova_expressao($1, VARIAVEL);
+      nova->id_tabela = tab_simbolos;
+      $$ = nova; // variavel ou funcao
       }
      | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES { }
      | NUM {
-      $$ = nova_expressao_int($1, VARIAVEL); } // verificar como adicionar o tipo certo
+        struct simbolo *s = busca_simbolo(tab_simbolos, $1);
+        if(s == NULL) {
+          struct simbolo *s = novo_simbolo5($1, VARIAVEL, escopo_atual, nome_funcao_atual);
+          tab_simbolos = insere_simbolo_ts(tab_simbolos, s);
+        }
+        struct expressao *nova = nova_expressao($1, VARIAVEL);
+        nova->id_tabela = tab_simbolos;
+        $$ = nova; // verificar como adicionar o tipo certo
+      }
      | ABRE_PARENTESES EXPRESSAO FECHA_PARENTESES {
         
       }
