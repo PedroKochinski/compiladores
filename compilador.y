@@ -82,7 +82,7 @@ DECLARACOES_DE_SUBPROGRAMAS: DECLARACOES_DE_SUBPROGRAMAS DECLARACAO_DE_SUBPROGRA
   | /* empty */
   ;
 
-DECLARACAO_DE_SUBPROGRAMA: CABECALHO_DE_SUBPROGRAMA DECLARACOES  ENUNCIADO_COMPOSTO {printf("aqui\n");}
+DECLARACAO_DE_SUBPROGRAMA: CABECALHO_DE_SUBPROGRAMA DECLARACOES  ENUNCIADO_COMPOSTO {}
   ;
 
 CABECALHO_DE_SUBPROGRAMA: FUNCTION {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS DOIS_PONTOS TIPO PONTO_VIRGULA {
@@ -216,13 +216,15 @@ FATOR: ID {
       nova->id_tabela = tab_simbolos;
       $$ = nova; // variavel ou funcao
       }
-     | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES { }
+     | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES { 
+      $$ =  executar_funcao(out_file, tab_simbolos, $1, $3, &contador_simbolos);
+      }
      | NUM {
         struct expressao *nova = nova_expressao2(tab_simbolos, $1, NUMERO, escopo_atual);
         $$ = nova; // verificar como adicionar o tipo certo
       }
-     | ABRE_PARENTESES EXPRESSAO FECHA_PARENTESES {
-        
+     | ABRE_PARENTESES EXPRESSAO FECHA_PARENTESES {       
+        $$ = $2; // retorna o resultado da expressao
       }
      ;
 

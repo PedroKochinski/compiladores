@@ -27,7 +27,7 @@ VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_llvm = 1; id_funcao = SEM_E
 ---------------
 --------------FIM-TS----------
 --------------TS--------------
-FUNCAO; lexema = minus; id_llvm = 12, escopo = 0; tipo = REAL; args:{c: INTEIRO, d: INTEIRO, e: REAL}
+FUNCAO; lexema = minus; id_llvm = 14, escopo = 0; tipo = REAL; args:{c: INTEIRO, d: INTEIRO, e: REAL}
 ---------------
 FUNCAO; lexema = plus; id_llvm = 3, escopo = 0; tipo = INTEIRO; args:{a: INTEIRO, b: INTEIRO}
 ---------------

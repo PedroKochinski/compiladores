@@ -52,8 +52,10 @@ struct expressao {
   TipoSimbolo tipo_simb;
   int valor_int;
   float valor_float;
+  struct lista_expressoes *args;
   struct tabela_simbolos *id_tabela;
 };
+
 struct lista_expressoes {
   struct expressao *exp;
   struct lista_expressoes *proximo;
@@ -72,7 +74,7 @@ struct expressao *nova_expressao_operador_multiplicativo(struct expressao *esq,
                                                          struct expressao *dir, char *operador);
 struct expressao *nova_expressao_operador_aditivo(FILE *fp, struct tabela_simbolos *ts, struct expressao *esq, struct expressao *dir, char *operador, int *contador_simbolos);
 struct expressao *nova_expressao2(struct tabela_simbolos *ts, char *lexema, TipoSimbolo tipo_simb, int escopo);
-struct expressao *executar_funcao(struct tabela_simbolos *ts, char *func_id, struct lista_expressoes *args);
+struct expressao *executar_funcao(FILE *fp, struct tabela_simbolos *ts, char* func_id, struct lista_expressoes *args, int *contador_simbolos);
 struct lista_expressoes *insere_lista_expressoes(struct lista_expressoes *lista,
                                                  struct expressao *exp);
 

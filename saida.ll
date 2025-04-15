@@ -3,34 +3,40 @@
 @y = global i32 0
 
 define i32 @plus(i32 %4, i32 %5) {
-	%a = alloca i32, %4
-	%b = alloca i32, %5
+	%a = alloca i32
+	store i32 %4, ptr %a
+	%b = alloca i32
+	store i32 %5, ptr %b
 
 	%res = alloca i32, 0
 
-	store i32 3, ptr %a
+	%7 = load i32, ptr %a
+	%8 = add i32 %7, 10
+	store i32 %8, ptr %a
 
-	%7 = load i32, ptr %b
-	%8 = add i32 %7, 1
-	store i32 %8, ptr %b
+	%9 = load i32, ptr %b
+	%10 = add i32 %9, 1
+	store i32 %10, ptr %b
 
-	%9 = load i32, ptr %a
-	%10 = load i32, ptr %b
-	%11 = add i32 %9, %10
-	store i32 %11, %plus
+	%11 = load i32, ptr %a
+	%12 = load i32, ptr %b
+	%13 = add i32 %11, %12
+	store i32 %13, ptr %plus
 	ret i32 %plus
 
 }
-define float @minus(i32 %13, i32 %14, float %15) {
-	%c = alloca i32, %13
-	%d = alloca i32, %14
-	%e = alloca float, %15
+define float @minus(i32 %15, i32 %16, float %17) {
+	%c = alloca i32
+	store i32 %15, ptr %c
+	%d = alloca i32
+	store i32 %16, ptr %d
+	%e = alloca float
+	store float %17, ptr %e
 
-	%16 = load i32, ptr %d
-	%17 = sub i32 %16, 1
-	store i32 %17, ptr %c
+	%18 = call i32 @plus()
+	store i32 %18, ptr %c
 
-	%18 = load i32, ptr %y
-	ret i32 %18
+	%19 = load i32, ptr %y
+	ret i32 %19
 
 }
