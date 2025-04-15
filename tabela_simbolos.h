@@ -11,7 +11,11 @@ typedef enum TipoSimbolo_e { VARIAVEL,
                               NUMERO,
                              FUNCAO,
                              PROC,
-                             RETORNO } TipoSimbolo;
+                             RETORNO,
+                            EXPR_SOMA,
+                            PONTEIRO } TipoSimbolo;
+
+                             
 
 struct simbolo {
   char *lexema;
@@ -43,6 +47,7 @@ struct tabela_simbolos {
 struct expressao {
   int id_llvm;
   char *lexema;
+  int escopo;
   Tipo tipo;
   TipoSimbolo tipo_simb;
   int valor_int;
@@ -65,8 +70,7 @@ struct expressao *nova_expressao_int(char *valor_int, TipoSimbolo tipo_simb);
 struct expressao *nova_expressao_float(float valor_float, TipoSimbolo tipo_simb);
 struct expressao *nova_expressao_operador_multiplicativo(struct expressao *esq,
                                                          struct expressao *dir, char *operador);
-struct expressao *nova_expressao_operador_aditivo(struct expressao *esq,
-                                                  struct expressao *dir, char *operador);
+struct expressao *nova_expressao_operador_aditivo(FILE *fp, struct tabela_simbolos *ts, struct expressao *esq, struct expressao *dir, char *operador, int *contador_simbolos);
 struct expressao *nova_expressao2(struct tabela_simbolos *ts, char *lexema, TipoSimbolo tipo_simb, int escopo);
 struct expressao *executar_funcao(struct tabela_simbolos *ts, char *func_id, struct lista_expressoes *args);
 struct lista_expressoes *insere_lista_expressoes(struct lista_expressoes *lista,
@@ -89,7 +93,7 @@ struct simbolo *busca_simbolo(struct tabela_simbolos *ts, char *lexema);
 struct tabela_simbolos *remove_simbolos(struct tabela_simbolos *ts, int escopo);
 void materializa_simbolos(FILE *fp, struct lista_simbolo *lista, int *contador_simbolos);
 void materializa_funcao(FILE *fp, struct lista_simbolo *args, struct simbolo *funcao, int *contador_simbolos);
-void materializa_atribuicao(FILE *fp, struct expressao *esq, struct expressao *dir);
+void materializa_atribuicao(struct tabela_simbolos *ts, FILE *fp, struct expressao *esq, struct expressao *dir, int *contador_simbolos);
 void imprime_tabela_simbolos(FILE *fp, struct tabela_simbolos *ts);
 void imprime_lista_simbolos(FILE *fp, struct lista_simbolo *lista);
 #endif

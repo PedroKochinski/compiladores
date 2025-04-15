@@ -3,7 +3,7 @@ var x,y: integer;
 function plus (a,b: integer): integer;
 var res: integer;
 begin
-    a := 3 + x;
+    a := 3;
     b := b + 1;
     plus := a + b
 end;
