@@ -4,7 +4,8 @@ var x,y: integer;
 function plus (a,b: integer): integer;
 var res: integer;
 begin
-    a := a + 10;
+
+    a := a + (10 - 3);
     b := b + 1;
     plus := a + b
 end;
