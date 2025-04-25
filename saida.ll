@@ -1,45 +1,51 @@
-@x = global i32 0
+@x = global i32, 0
+@y = global i32, 0
 
-@y = global i32 0
+@lixo = global float, 0
 
-define i32 @plus(i32 %4, i32 %5) {
+define i32 @plus(i32 %5, i32 %6) {
+entry:
 	%a = alloca i32
-	store i32 %4, ptr %a
+	store i32 %5, ptr %a
 	%b = alloca i32
-	store i32 %5, ptr %b
+	store i32 %6, ptr %b
+	%plus = alloca i32
 
-	%res = alloca i32, 0
+	%res = alloca i32
 
-	%7 = sub i32 10, 3
-	%8 = load i32, ptr %a
-	%9 = add i32 %8, %7
-	store i32 %9, ptr %a
+	%sum = alloca float
 
-	%10 = load i32, ptr %b
-	%11 = add i32 %10, 1
-	store i32 %11, ptr %b
+	%9 = sub i32 10, 3
+	%10 = load i32, ptr %a
+	%11 = add i32 %10, %9
+	store i32 %11, ptr %a
 
-	%12 = load i32, ptr %a
-	%13 = load i32, ptr %b
-	%14 = add i32 %12, %13
-	store i32 %14, ptr %plus
+	%12 = load i32, ptr %b
+	%13 = add i32 %12, 1
+	store i32 %13, ptr %b
+
+	%14 = load i32, ptr %a
+	%15 = load i32, ptr %b
+	%16 = add i32 %14, %15
+	store i32 %16, ptr %plus
 	ret i32 %plus
 
 }
-define float @minus(i32 %16, i32 %17, float %18) {
+define float @minus(i32 %18, i32 %19, float %20) {
 	%c = alloca i32
-	store i32 %16, ptr %c
+	store i32 %18, ptr %c
 	%d = alloca i32
-	store i32 %17, ptr %d
+	store i32 %19, ptr %d
 	%e = alloca float
-	store float %18, ptr %e
+	store float %20, ptr %e
+	%minus = alloca float
 
-	%19 = add i32 0, 4
-	%20 = add i32 0, 10
-	%21 = call i32 @plus(i32 %19, i32 %20)
-	store i32 %21, ptr %c
+	%21 = add i32 0, 4
+	%22 = add i32 0, 10
+	%23 = call i32 @plus(i32 %21, i32 %22)
+	store i32 %23, ptr %c
 
-	%22 = load i32, ptr %y
-	ret i32 %22
+	%24 = load i32, ptr %y
+	ret i32 %24
 
 }

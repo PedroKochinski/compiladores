@@ -1,8 +1,8 @@
 program simples (input, output);
-var x,y: integer;
+var x,y: integer; var lixo: real;
 
 function plus (a,b: integer): integer;
-var res: integer;
+var res: integer; var sum: real;
 begin
 
     a := a + (10 - 3);

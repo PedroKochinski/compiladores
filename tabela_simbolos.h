@@ -94,6 +94,7 @@ struct tabela_simbolos *insere_simbolos_ts(struct tabela_simbolos *ts,
 struct simbolo *busca_simbolo(struct tabela_simbolos *ts, char *lexema);
 struct tabela_simbolos *remove_simbolos(struct tabela_simbolos *ts, int escopo);
 void materializa_simbolos(FILE *fp, struct lista_simbolo *lista, int *contador_simbolos);
+void materializa_simbolos_globais(FILE *fp, struct lista_simbolo *lista,  int *contador_simbolos);
 void materializa_funcao(FILE *fp, struct lista_simbolo *args, struct simbolo *funcao, int *contador_simbolos);
 void materializa_atribuicao(struct tabela_simbolos *ts, FILE *fp, struct expressao *esq, struct expressao *dir, int *contador_simbolos);
 void imprime_tabela_simbolos(FILE *fp, struct tabela_simbolos *ts);

@@ -61,7 +61,9 @@ LISTA_DE_IDENTIFICADORES: ID {
 
 DECLARACOES: DECLARACOES VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO PONTO_VIRGULA {
   atualiza_tipo_simbolos($3,$5);
-  materializa_simbolos(out_file, $3, &contador_simbolos);
+  if(escopo_atual == 0)    materializa_simbolos_globais(out_file, $3, &contador_simbolos);
+  
+  else materializa_simbolos(out_file, $3, &contador_simbolos);
   tab_simbolos = insere_simbolos_ts(tab_simbolos, $3);
   imprime_tabela_simbolos(log_file, tab_simbolos);
   }
@@ -126,7 +128,7 @@ ENUNCIADOS_OPCIONAIS: LISTA_DE_ENUNCIADOS
                     ;
 
 LISTA_DE_ENUNCIADOS: ENUNCIADO
-                   | LISTA_DE_ENUNCIADOS PONTO_VIRGULA ENUNCIADO
+                   | LISTA_DE_ENUNCIADOS PONTO_VIRGULA ENUNCIADO {  }
                    ;
 
 ENUNCIADO: VARIAVEL OPERADOR_ATRIBUICAO EXPRESSAO {
@@ -176,15 +178,11 @@ EXPRESSAO: EXPRESSAO_SIMPLES {$$ = $1;}
          ;
 
 EXPRESSAO_SIMPLES: TERMO { $$ = $1; } 
-                 | SINAL TERMO {}
+                 | SINAL TERMO { }
                  | EXPRESSAO_SIMPLES MAIS EXPRESSAO_SIMPLES { 
-                  //  printf("EXPRESSAO_SIMPLES: %s %s %s\n", $1->lexema, $2, $3->lexema);
-                  //  emite_operador_aditivo(&contador_simbolos, $1, $3, $2);
                    $$ = nova_expressao_operador_aditivo(out_file, tab_simbolos, $1, $3, $2, &contador_simbolos);
                  }
                  | EXPRESSAO_SIMPLES MENOS EXPRESSAO_SIMPLES {
-                    // printf("EXPRESSAO_SIMPLES: %s %s %s\n", $1->lexema, $2, $3->lexema);
-                  //  materializa_soma(out_file, &contador_simbolos, $1, $3, $2);
                     $$ = nova_expressao_operador_aditivo(out_file, tab_simbolos, $1, $3, $2, &contador_simbolos);
                  }
                  | EXPRESSAO_SIMPLES OR EXPRESSAO_SIMPLES { }
