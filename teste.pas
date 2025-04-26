@@ -7,6 +7,10 @@ begin
 
     a := a + (10 - 3);
     b := b + 1;
+    if (a > b) then
+        a := a + 1
+    else
+        a := b;
     plus := a + b
 end;
 

@@ -11,6 +11,7 @@ FILE *log_file, *out_file;
 
 struct tabela_simbolos * tab_simbolos = NULL;
 int escopo_atual = 0;
+int contador_if = 0;
 char *nome_funcao_atual = "SEM_ESCOPO_FUNCAO";
 struct lista_simbolo *lista_identificadores = NULL;
 struct lista_expressoes *lista_expressoes_atual = NULL;
@@ -28,8 +29,8 @@ int contador_simbolos = 0;
 }
 
 %token PROGRAM ABRE_PARENTESES FECHA_PARENTESES PONTO_VIRGULA VIRGULA INTEIRO REAL
-%token OR OPERADOR_RELACIONAL EOL PONTO_FINAL VAR FUNCTION PROCEDURE DOIS_PONTOS BEGIN_TOKEN END IF THEN ELSE DO WHILE OPERADOR_ATRIBUICAO
-%token <lexema> ID <lexema> NUM <lexema> OPERADOR_MULTIPLICATIVO <lexema> MAIS <lexema> MENOS
+%token OR  EOL PONTO_FINAL VAR FUNCTION PROCEDURE DOIS_PONTOS BEGIN_TOKEN END IF THEN ELSE DO WHILE OPERADOR_ATRIBUICAO
+%token <lexema> ID <lexema> NUM <lexema> OPERADOR_MULTIPLICATIVO <lexema> MAIS <lexema> MENOS <lexema> OPERADOR_RELACIONAL
 %type <tipo>TIPO
 %type <lista_s> LISTA_DE_IDENTIFICADORES
 %type <lista_s> ARGUMENTOS
@@ -137,7 +138,22 @@ ENUNCIADO: VARIAVEL OPERADOR_ATRIBUICAO EXPRESSAO {
           }
          | CHAMADA_DE_PROCEDIMENTO
          | ENUNCIADO_COMPOSTO
-         | IF EXPRESSAO THEN ENUNCIADO ELSE ENUNCIADO
+         | IF EXPRESSAO {
+          fprintf(out_file, "\tbr i1 %%%d label %%then_%d, label %%else_%d\n", $2->id_llvm, contador_if, contador_if); 
+          } 
+          THEN {
+            fprintf(out_file, "then_%d:\n", contador_if);
+          }
+          ENUNCIADO {
+            fprintf(out_file, "\tbr label %%fim_if_%d\n", contador_if);
+          } ELSE {
+            fprintf(out_file, "else_%d:\n", contador_if);
+          }
+           ENUNCIADO {
+            fprintf(out_file, "\tbr label %%fim_if_%d\n", contador_if);
+            fprintf(out_file, "fim_if_%d:\n", contador_if);
+            ++contador_if;
+          }
          | WHILE EXPRESSAO DO ENUNCIADO 
          ;
 
@@ -174,7 +190,9 @@ LISTA_DE_EXPRESSOES: EXPRESSAO { lista_expressoes_atual = insere_lista_expressoe
                     ;
 
 EXPRESSAO: EXPRESSAO_SIMPLES {$$ = $1;}
-         | EXPRESSAO_SIMPLES OPERADOR_RELACIONAL EXPRESSAO_SIMPLES
+         | EXPRESSAO_SIMPLES OPERADOR_RELACIONAL EXPRESSAO_SIMPLES {
+           $$ = nova_expressao_operador_relacional(out_file, tab_simbolos, $1, $3, $2, &contador_simbolos);
+         }
          ;
 
 EXPRESSAO_SIMPLES: TERMO { $$ = $1; } 
