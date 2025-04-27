@@ -48,6 +48,7 @@ fim_if_0:
 	ret i32 %plus
 
 }
+
 define float @minus(i32 %24, i32 %25, float %26) {
 	%c = alloca i32
 	store i32 %24, ptr %c
@@ -66,3 +67,4 @@ define float @minus(i32 %24, i32 %25, float %26) {
 	ret i32 %30
 
 }
+

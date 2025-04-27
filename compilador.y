@@ -12,6 +12,7 @@ FILE *log_file, *out_file;
 struct tabela_simbolos * tab_simbolos = NULL;
 int escopo_atual = 0;
 int contador_if = 0;
+int contador_while = 0;
 char *nome_funcao_atual = "SEM_ESCOPO_FUNCAO";
 struct lista_simbolo *lista_identificadores = NULL;
 struct lista_expressoes *lista_expressoes_atual = NULL;
@@ -121,7 +122,7 @@ LISTA_DE_PARAMETROS: LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {
   ;
 
 
-ENUNCIADO_COMPOSTO: BEGIN_TOKEN ENUNCIADOS_OPCIONAIS END {fprintf(out_file, "}\n");}
+ENUNCIADO_COMPOSTO: BEGIN_TOKEN ENUNCIADOS_OPCIONAIS END {fprintf(out_file, "}\n\n");}
                   ;
 
 ENUNCIADOS_OPCIONAIS: LISTA_DE_ENUNCIADOS
@@ -149,12 +150,24 @@ ENUNCIADO: VARIAVEL OPERADOR_ATRIBUICAO EXPRESSAO {
           } ELSE {
             fprintf(out_file, "else_%d:\n", contador_if);
           }
-           ENUNCIADO {
+          ENUNCIADO {
             fprintf(out_file, "\tbr label %%fim_if_%d\n", contador_if);
             fprintf(out_file, "fim_if_%d:\n", contador_if);
             ++contador_if;
           }
-         | WHILE EXPRESSAO DO ENUNCIADO 
+         | WHILE {
+            fprintf(out_file, "\tbr label %%teste_while_%d\n", contador_while);
+            fprintf(out_file, "teste_while_%d:\n", contador_while);
+          }
+          EXPRESSAO {
+            fprintf(out_file, "\tbr i1 %%%d label %%while_%d, label %%fim_while_%d\n", $3->id_llvm, contador_while, contador_while);
+            fprintf(out_file, "while%d:\n", contador_while);
+          } DO
+           ENUNCIADO {
+            fprintf(out_file, "\tbr label %%teste_while_%d\n", contador_while);
+            fprintf(out_file, "fim_while_%d:\n", contador_while);
+            ++contador_while;
+           }
          ;
 
 VARIAVEL: ID {
