@@ -153,7 +153,7 @@ void materializa_variavel(FILE *fp, char* buffer, struct expressao *expr, int *c
         materializa_variavel_dinamica(fp, expr, contador_simbolos);
         sprintf(buffer, "%%%d", expr->id_llvm);
     } else if (expr->tipo_simb == NUMERO)
-        sprintf(buffer, "%%%s", expr->lexema);
+        sprintf(buffer, "%s", expr->lexema);
     else if (expr->tipo_simb == EXPR_SOMA)
     sprintf(buffer, "%%%d", expr->id_llvm);
       
@@ -550,6 +550,8 @@ void materializa_atribuicao(struct tabela_simbolos *ts, FILE *fp,
         exit(1);
     }
     char buffer_llvm[1000];
+    printf("esq->lexema %s esq->tipo_simb %d\n", esq->lexema, esq->tipo_simb);
+    printf("dir->lexema %s dir->tipo_simb %d\n", dir->lexema, dir->tipo_simb);
     // jogar valor da expr dir na variavel temporaria e entao fazer o store na
     // variavel da esquerda printf("lexema da expr dir: %s %d\n", dir->lexema,
     // dir->tipo_simb); sprintf(buffer_llvm, "\t%%%d = %d", *contador_simbolos,
@@ -609,7 +611,7 @@ void materializa_atribuicao(struct tabela_simbolos *ts, FILE *fp,
                     esq->tipo == INT ? "i32" : "float", esq->lexema);
             fprintf(fp, "%s\n", buffer_llvm);
         }
-    } else if (esq->tipo_simb == PONTEIRO || esq->escopo == 0) {
+    } else if (esq->tipo_simb == PONTEIRO || esq->tipo_simb == VARIAVEL || esq->escopo == 0) {
         if (dir->tipo_simb == FUNCAO) {
             char buffer_args[1000];
             char *buffer_args_ids = (char *)malloc(1000 * sizeof(char));
@@ -662,7 +664,8 @@ void materializa_atribuicao(struct tabela_simbolos *ts, FILE *fp,
                     esq->lexema);
             fprintf(fp, "%s\n\n", buffer_llvm);
         }
-    } else {
+    
+    }  else {
         if (dir->tipo_simb == FUNCAO) {
             (*contador_simbolos)++;
             // char buffer_args[1000];

@@ -2,7 +2,7 @@ program simples (input, output);
 var x,y: integer; var lixo: real;
 
 function plus (a,b: integer): integer;
-var res: integer; var sum: real;
+var res, i: integer; var sum: real;
 begin
 
     a := a + (10 - 3);
@@ -11,6 +11,12 @@ begin
         a := a + 1
     else
         a := b;
+    i := 0;
+    while (i <= 10) do
+    begin
+        a := a + 1;
+        i := i + 1
+    end;
     plus := a + b
 end;
 

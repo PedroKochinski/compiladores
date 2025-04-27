@@ -13,58 +13,80 @@ entry:
 
 	%res = alloca i32
 
+	%i = alloca i32
+
 	%sum = alloca float
 
-	%9 = sub i32 10, 3
-	%10 = load i32, ptr %a
-	%11 = add i32 %10, %9
-	store i32 %11, ptr %a
+	%10 = sub i32 10, 3
+	%11 = load i32, ptr %a
+	%12 = add i32 %11, %10
+	store i32 %12, ptr %a
 
-	%12 = load i32, ptr %b
-	%13 = add i32 %12, 1
-	store i32 %13, ptr %b
+	%13 = load i32, ptr %b
+	%14 = add i32 %13, 1
+	store i32 %14, ptr %b
 
-	%14 = load i32 ptr %a
-	%15 = load i32 ptr %b
-	%16 = icmp sgt i32 %14, %15
+	%15 = load i32 ptr %a
+	%16 = load i32 ptr %b
+	%17 = icmp sgt i32 %15, %16
 
-	br i1 %16 label %then_0, label %else_0
+	br i1 %17 label %then_0, label %else_0
 then_0:
-	%17 = load i32, ptr %a
-	%18 = add i32 %17, 1
-	store i32 %18, ptr %a
-
-	br label %fim_if_0
-else_0:
-	%19 = load i32, ptr %b
+	%18 = load i32, ptr %a
+	%19 = add i32 %18, 1
 	store i32 %19, ptr %a
 
 	br label %fim_if_0
+else_0:
+	%20 = load i32, ptr %b
+	store i32 %20, ptr %a
+
+	br label %fim_if_0
 fim_if_0:
-	%20 = load i32, ptr %a
-	%21 = load i32, ptr %b
-	%22 = add i32 %20, %21
-	store i32 %22, ptr %plus
+	store i32 0, ptr %i
+
+	br label %teste_while_0
+teste_while_0:
+	%21 = load i32 ptr %i
+	%22 = icmp sle i32 %21, 10
+
+	br i1 %22 label %while_0, label %fim_while_0
+while0:
+	%23 = load i32, ptr %a
+	%24 = add i32 %23, 1
+	store i32 %24, ptr %a
+
+	%25 = add i32 æ¦k, 1
+	store i32 %25, ptr %i
+
+}
+
+	br label %teste_while_0
+fim_while_0:
+	%26 = load i32, ptr %a
+	%27 = load i32, ptr %b
+	%28 = add i32 %26, %27
+	store i32 %28, ptr %plus
 	ret i32 %plus
 
 }
 
-define float @minus(i32 %24, i32 %25, float %26) {
+define float @minus(i32 %30, i32 %31, float %32) {
 	%c = alloca i32
-	store i32 %24, ptr %c
+	store i32 %30, ptr %c
 	%d = alloca i32
-	store i32 %25, ptr %d
+	store i32 %31, ptr %d
 	%e = alloca float
-	store float %26, ptr %e
+	store float %32, ptr %e
 	%minus = alloca float
 
-	%27 = add i32 0, 4
-	%28 = add i32 0, 10
-	%29 = call i32 @plus(i32 %27, i32 %28)
-	store i32 %29, ptr %c
+	%33 = add i32 0, 4
+	%34 = add i32 0, 10
+	%35 = call i32 @plus(i32 %33, i32 %34)
+	store i32 %35, ptr %c
 
-	%30 = load i32, ptr %y
-	ret i32 %30
+	%36 = load i32, ptr %y
+	ret i32 %36
 
 }
 
