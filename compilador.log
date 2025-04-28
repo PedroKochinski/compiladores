@@ -60,15 +60,3 @@ VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO; id_llvm = 2; id_funcao = SEM_E
 VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_llvm = 1; id_funcao = SEM_ESCOPO_FUNCAO
 ---------------
 --------------FIM-TS----------
---------------TS--------------
-FUNCAO; lexema = minus; id_llvm = 29, escopo = 0; tipo = REAL; args:{c: INTEIRO, d: INTEIRO, e: REAL}
----------------
-FUNCAO; lexema = plus; id_llvm = 4, escopo = 0; tipo = INTEIRO; args:{a: INTEIRO, b: INTEIRO}
----------------
-NUMERO; lexema = lixo; escopo = 0; tipo = REAL; id_llvm = 3; id_funcao = SEM_ESCOPO_FUNCAO
----------------
-VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO; id_llvm = 2; id_funcao = SEM_ESCOPO_FUNCAO
----------------
-VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_llvm = 1; id_funcao = SEM_ESCOPO_FUNCAO
----------------
---------------FIM-TS----------

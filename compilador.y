@@ -47,8 +47,19 @@ int contador_simbolos = 0;
 %%
 
 PROGRAMA: PROGRAM ID ABRE_PARENTESES LISTA_DE_IDENTIFICADORES FECHA_PARENTESES PONTO_VIRGULA 
-  DECLARACOES
+  {
+    // materializar as funcoes de escrita e leitura e colocar os simbolos na tabela
+    fprintf(out_file, "declare i32 @printf(ptr noundef, ...)\n");
+    fprintf(out_file, "declare i32 @scanf(ptr noundef, ...)\n");
+    fprintf(out_file, "@read_int = private unnamed_addr constant [3 x i8] c\"%%d\\00\", align 1\n");
+    fprintf(out_file, "@write_int = private unnamed_addr constant [4 x i8] c\"%%d\\0A\\00\", align 1\n");
+    fprintf(out_file, "@read_float = private unnamed_addr constant [3 x i8] c\"%%f\\00\", align 1\n");
+    fprintf(out_file, "@write_float = private unnamed_addr constant [4 x i8] c\"%%f\\0A\\00\", align 1\n\n");
+    // tab_simbolos = insere_simbolo_ts(tab_simbolos, novo_simbolo5("write", FUNCAO, 0, VAZIO));
+  } DECLARACOES
   DECLARACOES_DE_SUBPROGRAMAS
+  /* ENUNCIADO_COMPOSTO
+  PONTO_FINAL */
   ;
 
 LISTA_DE_IDENTIFICADORES: ID {
@@ -86,7 +97,7 @@ DECLARACOES_DE_SUBPROGRAMAS: DECLARACOES_DE_SUBPROGRAMAS DECLARACAO_DE_SUBPROGRA
   | /* empty */
   ;
 
-DECLARACAO_DE_SUBPROGRAMA: CABECALHO_DE_SUBPROGRAMA DECLARACOES  ENUNCIADO_COMPOSTO {}
+DECLARACAO_DE_SUBPROGRAMA: CABECALHO_DE_SUBPROGRAMA DECLARACOES  ENUNCIADO_COMPOSTO {fprintf(out_file, "}\n\n");}
   ;
 
 CABECALHO_DE_SUBPROGRAMA: FUNCTION {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS DOIS_PONTOS TIPO PONTO_VIRGULA {
@@ -122,7 +133,7 @@ LISTA_DE_PARAMETROS: LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {
   ;
 
 
-ENUNCIADO_COMPOSTO: BEGIN_TOKEN ENUNCIADOS_OPCIONAIS END {fprintf(out_file, "}\n\n");}
+ENUNCIADO_COMPOSTO: BEGIN_TOKEN ENUNCIADOS_OPCIONAIS END 
                   ;
 
 ENUNCIADOS_OPCIONAIS: LISTA_DE_ENUNCIADOS
@@ -161,7 +172,7 @@ ENUNCIADO: VARIAVEL OPERADOR_ATRIBUICAO EXPRESSAO {
           }
           EXPRESSAO {
             fprintf(out_file, "\tbr i1 %%%d label %%while_%d, label %%fim_while_%d\n", $3->id_llvm, contador_while, contador_while);
-            fprintf(out_file, "while%d:\n", contador_while);
+            fprintf(out_file, "while_%d:\n", contador_while);
           } DO
            ENUNCIADO {
             fprintf(out_file, "\tbr label %%teste_while_%d\n", contador_while);
@@ -171,26 +182,25 @@ ENUNCIADO: VARIAVEL OPERADOR_ATRIBUICAO EXPRESSAO {
          ;
 
 VARIAVEL: ID {
-  printf("VARIAVEL: %s\n", $1);
-          // imprime_tabela_simbolos(stdout, tab_simbolos);
+          printf("VARIAVEL: %s\n", $1);
           struct simbolo *s = busca_simbolo(tab_simbolos, $1);
           if(s == NULL) {
-            struct simbolo *s = novo_simbolo5($1, VARIAVEL, escopo_atual, nome_funcao_atual);
-            tab_simbolos = insere_simbolo_ts(tab_simbolos, s);
+            fprintf(stderr, "Erro: variavel %s nao declarada\n", $1);
+            exit(1);
           }
           struct expressao *nova;
           if(strcmp(nome_funcao_atual, $1) == 0){
-            printf("VARIAVEL: %s %s\n", $1, nome_funcao_atual);
+            printf("VARIAVEL DE RETORNO: %s %s\n", $1, nome_funcao_atual);
             nova = nova_expressao2(tab_simbolos, $1, RETORNO, escopo_atual); // retorno da funcao
           } 
-          else nova = nova_expressao2(tab_simbolos, $1, s->tipo_simb, escopo_atual); // variavel
+          else nova = nova_expressao2(tab_simbolos, $1, s->tipo_simb, s->escopo); // variavel
           nova->id_tabela = tab_simbolos;
           $$ = nova; // variavel ou funcao
         }
         ;
 
 CHAMADA_DE_PROCEDIMENTO: ID
-                    | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES
+                    | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES {executar_funcao(out_file, tab_simbolos, $1, $3, &contador_simbolos);}
                     ;
 
 LISTA_DE_EXPRESSOES: EXPRESSAO { lista_expressoes_atual = insere_lista_expressoes(NULL, $1);
@@ -232,21 +242,15 @@ TERMO: FATOR {
 FATOR: ID {
       struct simbolo *s = busca_simbolo(tab_simbolos, $1);
       if(s == NULL) {
-        if(strcmp(nome_funcao_atual, $1) == 0){
-          printf("FATOR: %s %s\n", $1, nome_funcao_atual);
-          s = novo_simbolo5($1, RETORNO, escopo_atual, nome_funcao_atual);
-        } else {
-          printf("FATOR: %s\n", $1);
-          s = novo_simbolo5($1, VARIAVEL, escopo_atual, nome_funcao_atual);
-        }
-        tab_simbolos = insere_simbolo_ts(tab_simbolos, s);
+        fprintf(stderr, "Erro: variavel %s nao declarada\n", $1);
+        exit(1);
       }
-      struct expressao *nova = nova_expressao($1, s->tipo_simb);
+      struct expressao *nova = nova_expressao2(tab_simbolos, $1, s->tipo_simb, s->escopo);
       nova->id_tabela = tab_simbolos;
       $$ = nova; // variavel ou funcao
       }
-     | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES { 
-      $$ =  executar_funcao(out_file, tab_simbolos, $1, $3, &contador_simbolos);
+     | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES {
+        $$ =  executar_funcao(out_file, tab_simbolos, $1, $3, &contador_simbolos);
       }
      | NUM {
         struct expressao *nova = nova_expressao2(tab_simbolos, $1, NUMERO, escopo_atual);

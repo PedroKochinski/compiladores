@@ -1,3 +1,10 @@
+declare i32 @printf(ptr noundef, ...)
+declare i32 @scanf(ptr noundef, ...)
+@read_int = private unnamed_addr constant [3 x i8] c"%d\00", align 1
+@write_int = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
+@read_float = private unnamed_addr constant [3 x i8] c"%f\00", align 1
+@write_float = private unnamed_addr constant [4 x i8] c"%f\0A\00", align 1
+
 @x = global i32, 0
 @y = global i32, 0
 
@@ -17,29 +24,32 @@ entry:
 
 	%sum = alloca float
 
-	%10 = sub i32 10, 3
-	%11 = load i32, ptr %a
-	%12 = add i32 %11, %10
-	store i32 %12, ptr %a
+	%10 = call i32 (ptr, ...) @__isoc99_scanf(ptr @read_int, ptr %res)
+	%11 = call i32 (ptr, ...) @__isoc99_scanf(ptr @read_int, ptr %sum)
+	%12 = call i32 (ptr, ...) @__isoc99_scanf(ptr @read_int, ptr @x)
+	%13 = sub i32 10, 3
+	%14 = load i32 ptr %a
+	%15 = add i32 %14, %13
+	store i32 %15, ptr %a
 
-	%13 = load i32, ptr %b
-	%14 = add i32 %13, 1
-	store i32 %14, ptr %b
-
-	%15 = load i32 ptr %a
 	%16 = load i32 ptr %b
-	%17 = icmp sgt i32 %15, %16
+	%17 = add i32 %16, 1
+	store i32 %17, ptr %b
 
-	br i1 %17 label %then_0, label %else_0
+	%18 = load i32 ptr %a
+	%19 = load i32 ptr %b
+	%20 = icmp sgt i32 %18, %19
+
+	br i1 %20 label %then_0, label %else_0
 then_0:
-	%18 = load i32, ptr %a
-	%19 = add i32 %18, 1
-	store i32 %19, ptr %a
+	%21 = load i32 ptr %a
+	%22 = add i32 %21, 1
+	store i32 %22, ptr %a
 
 	br label %fim_if_0
 else_0:
-	%20 = load i32, ptr %b
-	store i32 %20, ptr %a
+	%23 = load i32 ptr %b
+	store i32 %23, ptr %a
 
 	br label %fim_if_0
 fim_if_0:
@@ -47,46 +57,30 @@ fim_if_0:
 
 	br label %teste_while_0
 teste_while_0:
-	%21 = load i32 ptr %i
-	%22 = icmp sle i32 %21, 10
+	%24 = load i32 ptr %i
+	%25 = icmp sle i32 %24, 10
 
-	br i1 %22 label %while_0, label %fim_while_0
-while0:
-	%23 = load i32, ptr %a
-	%24 = add i32 %23, 1
-	store i32 %24, ptr %a
+	br i1 %25 label %while_0, label %fim_while_0
+while_0:
+	%26 = load i32 ptr %a
+	%27 = add i32 %26, 1
+	store i32 %27, ptr %a
 
-	%25 = add i32 æ¦k, 1
-	store i32 %25, ptr %i
-
-}
+	%28 = load i32 ptr %i
+	%29 = add i32 %28, 1
+	store i32 %29, ptr %i
 
 	br label %teste_while_0
 fim_while_0:
-	%26 = load i32, ptr %a
-	%27 = load i32, ptr %b
-	%28 = add i32 %26, %27
-	store i32 %28, ptr %plus
+	%30 = load i32 ptr %a
+	%31 = load i32 ptr %b
+	%32 = add i32 %30, %31
+	%34 = call i32 (ptr, ...) @printf(ptr @write_int, i32 %32)
+
+	%35 = load i32 ptr %a
+	%36 = load i32 ptr %b
+	%37 = add i32 %35, %36
+	store i32 %37, ptr %plus
 	ret i32 %plus
-
-}
-
-define float @minus(i32 %30, i32 %31, float %32) {
-	%c = alloca i32
-	store i32 %30, ptr %c
-	%d = alloca i32
-	store i32 %31, ptr %d
-	%e = alloca float
-	store float %32, ptr %e
-	%minus = alloca float
-
-	%33 = add i32 0, 4
-	%34 = add i32 0, 10
-	%35 = call i32 @plus(i32 %33, i32 %34)
-	store i32 %35, ptr %c
-
-	%36 = load i32, ptr %y
-	ret i32 %36
-
 }
 
