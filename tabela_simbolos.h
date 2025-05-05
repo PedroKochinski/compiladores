@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef enum Tipo_e { INT, FLOAT, VAZIO } Tipo;
+typedef enum Tipo_e { INT, FLOAT, VAZIO, REFERENCIA } Tipo;
 typedef enum TipoSimbolo_e {
     VARIAVEL,
     NUMERO,
@@ -68,13 +68,10 @@ struct simbolo *novo_simbolo4(char *lexema, TipoSimbolo tipo_simb, int escopo,
                               Tipo tipo);
 struct expressao *nova_expressao(char *lexema, TipoSimbolo tipo_simb);
 struct expressao *nova_expressao_int(char *valor_int, TipoSimbolo tipo_simb);
-struct expressao *nova_expressao_float(float valor_float,
-                                       TipoSimbolo tipo_simb);
-struct expressao *nova_expressao_operador_multiplicativo(struct expressao *esq,
-                                                         struct expressao *dir,
-                                                         char *operador);
+struct expressao *nova_expressao_float(float valor_float, TipoSimbolo tipo_simb);
+
 struct expressao *nova_expressao_operador_relacional(FILE *fp, struct tabela_simbolos *ts, struct expressao *esq, struct expressao *dir, char *operador_relacional, int *contador_simbolos);
-struct expressao *nova_expressao_operador_aditivo(
+struct expressao *nova_expressao_operador_aditivo_e_multiplicativo(
     FILE *fp, struct tabela_simbolos *ts, struct expressao *esq,
     struct expressao *dir, char *operador, int *contador_simbolos);
 struct expressao *nova_expressao2(struct tabela_simbolos *ts, char *lexema,

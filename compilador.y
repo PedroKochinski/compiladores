@@ -50,16 +50,29 @@ PROGRAMA: PROGRAM ID ABRE_PARENTESES LISTA_DE_IDENTIFICADORES FECHA_PARENTESES P
   {
     // materializar as funcoes de escrita e leitura e colocar os simbolos na tabela
     fprintf(out_file, "declare i32 @printf(ptr noundef, ...)\n");
-    fprintf(out_file, "declare i32 @scanf(ptr noundef, ...)\n");
+    fprintf(out_file, "declare i32 @__isoc99_scanf(ptr noundef, ...)\n");
     fprintf(out_file, "@read_int = private unnamed_addr constant [3 x i8] c\"%%d\\00\", align 1\n");
     fprintf(out_file, "@write_int = private unnamed_addr constant [4 x i8] c\"%%d\\0A\\00\", align 1\n");
     fprintf(out_file, "@read_float = private unnamed_addr constant [3 x i8] c\"%%f\\00\", align 1\n");
     fprintf(out_file, "@write_float = private unnamed_addr constant [4 x i8] c\"%%f\\0A\\00\", align 1\n\n");
     // tab_simbolos = insere_simbolo_ts(tab_simbolos, novo_simbolo5("write", FUNCAO, 0, VAZIO));
   } DECLARACOES
-  DECLARACOES_DE_SUBPROGRAMAS
-  /* ENUNCIADO_COMPOSTO
-  PONTO_FINAL */
+  DECLARACOES_DE_SUBPROGRAMAS {
+    fprintf(out_file, "define i32 @main() {\n");
+  }
+  ENUNCIADO_COMPOSTO
+  PONTO_FINAL {
+    fprintf(out_file, "\tret i32 0\n");
+    fprintf(out_file, "}\n");
+    tab_simbolos = remove_simbolos(tab_simbolos, escopo_atual);
+    --escopo_atual;
+    nome_funcao_atual = "SEM_ESCOPO_FUNCAO";
+    fclose(log_file);
+    fclose(out_file);
+    printf("Compilacao finalizada com sucesso!\n");
+    printf("Arquivo de saida: saida.ll\n");
+    printf("Arquivo de log: compilador.log\n");
+  }
   ;
 
 LISTA_DE_IDENTIFICADORES: ID {
@@ -97,7 +110,18 @@ DECLARACOES_DE_SUBPROGRAMAS: DECLARACOES_DE_SUBPROGRAMAS DECLARACAO_DE_SUBPROGRA
   | /* empty */
   ;
 
-DECLARACAO_DE_SUBPROGRAMA: CABECALHO_DE_SUBPROGRAMA DECLARACOES  ENUNCIADO_COMPOSTO {fprintf(out_file, "}\n\n");}
+DECLARACAO_DE_SUBPROGRAMA: CABECALHO_DE_SUBPROGRAMA DECLARACOES  ENUNCIADO_COMPOSTO {
+  struct simbolo *s = busca_simbolo(tab_simbolos, nome_funcao_atual);
+  if(s->tipo_simb == FUNCAO) {
+    ++(contador_simbolos);
+    fprintf(out_file, "\t%%%d = load %s, ptr %%%s\n", contador_simbolos, s->tipo == INT ? "i32" : "float", s->lexema);
+    fprintf(out_file, "\tret i32 %%%d\n", contador_simbolos);
+  }
+  else if(s->tipo_simb == PROC) {
+    fprintf(out_file, "\tret void\n");
+  }
+  fprintf(out_file, "}\n\n");
+  }
   ;
 
 CABECALHO_DE_SUBPROGRAMA: FUNCTION {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS DOIS_PONTOS TIPO PONTO_VIRGULA {
@@ -145,13 +169,13 @@ LISTA_DE_ENUNCIADOS: ENUNCIADO
                    ;
 
 ENUNCIADO: VARIAVEL OPERADOR_ATRIBUICAO EXPRESSAO {
-          printf("ENUNCIADO: %s := %s\n", $1->lexema, $3->lexema);
+          fprintf(out_file,  "; ENUNCIADO: %s (tipo %d) := %s (tipo %d)\n", $1->lexema, $1->tipo_simb, $3->lexema, $3->tipo_simb);
           materializa_atribuicao(tab_simbolos, out_file, $1, $3, &contador_simbolos);
           }
          | CHAMADA_DE_PROCEDIMENTO
          | ENUNCIADO_COMPOSTO
          | IF EXPRESSAO {
-          fprintf(out_file, "\tbr i1 %%%d label %%then_%d, label %%else_%d\n", $2->id_llvm, contador_if, contador_if); 
+          fprintf(out_file, "\tbr i1 %%%d, label %%then_%d, label %%else_%d\n", $2->id_llvm, contador_if, contador_if); 
           } 
           THEN {
             fprintf(out_file, "then_%d:\n", contador_if);
@@ -221,10 +245,10 @@ EXPRESSAO: EXPRESSAO_SIMPLES {$$ = $1;}
 EXPRESSAO_SIMPLES: TERMO { $$ = $1; } 
                  | SINAL TERMO { }
                  | EXPRESSAO_SIMPLES MAIS EXPRESSAO_SIMPLES { 
-                   $$ = nova_expressao_operador_aditivo(out_file, tab_simbolos, $1, $3, $2, &contador_simbolos);
+                   $$ = nova_expressao_operador_aditivo_e_multiplicativo(out_file, tab_simbolos, $1, $3, $2, &contador_simbolos);
                  }
                  | EXPRESSAO_SIMPLES MENOS EXPRESSAO_SIMPLES {
-                    $$ = nova_expressao_operador_aditivo(out_file, tab_simbolos, $1, $3, $2, &contador_simbolos);
+                    $$ = nova_expressao_operador_aditivo_e_multiplicativo(out_file, tab_simbolos, $1, $3, $2, &contador_simbolos);
                  }
                  | EXPRESSAO_SIMPLES OR EXPRESSAO_SIMPLES { }
                  ;
@@ -234,8 +258,7 @@ TERMO: FATOR {
       }
      | TERMO OPERADOR_MULTIPLICATIVO FATOR {
        printf("TERMO: %s %s %s\n", $1->lexema, $2, $3->lexema);
-      $$ = nova_expressao_operador_multiplicativo($1, $3, $2);
-      
+      $$ = nova_expressao_operador_aditivo_e_multiplicativo(out_file, tab_simbolos, $1, $3, $2, &contador_simbolos);
      }
      ;
 
