@@ -87,8 +87,7 @@ LISTA_DE_IDENTIFICADORES: ID {
 
 DECLARACOES: DECLARACOES VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO PONTO_VIRGULA {
   atualiza_tipo_simbolos($3,$5);
-  if(escopo_atual == 0)    materializa_simbolos_globais(out_file, $3, &contador_simbolos);
-  
+  if(escopo_atual == 0)  materializa_simbolos_globais(out_file, $3, &contador_simbolos);
   else materializa_simbolos(out_file, $3, &contador_simbolos);
   tab_simbolos = insere_simbolos_ts(tab_simbolos, $3);
   imprime_tabela_simbolos(log_file, tab_simbolos);
@@ -126,17 +125,17 @@ DECLARACAO_DE_SUBPROGRAMA: CABECALHO_DE_SUBPROGRAMA DECLARACOES  ENUNCIADO_COMPO
 
 CABECALHO_DE_SUBPROGRAMA: FUNCTION {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS DOIS_PONTOS TIPO PONTO_VIRGULA {
   struct simbolo *nova_funcao = novo_simbolo4($3, FUNCAO, 0, $7);
-  tab_simbolos = insere_simbolo_ts(tab_simbolos, nova_funcao);
   materializa_funcao(out_file, $5, nova_funcao, &contador_simbolos);
   insere_func_args(nova_funcao, $5);
   tab_simbolos = insere_simbolos_ts(tab_simbolos, $5);
+  tab_simbolos = insere_simbolo_ts(tab_simbolos, nova_funcao);
   }
   | PROCEDURE {++escopo_atual;} ID {nome_funcao_atual = $3;} ARGUMENTOS PONTO_VIRGULA {
   struct simbolo *nova_procedure = novo_simbolo4($3, PROC, 0, VAZIO);
-  tab_simbolos = insere_simbolo_ts(tab_simbolos, nova_procedure);
   materializa_funcao(out_file, $5, nova_procedure, &contador_simbolos);
   insere_func_args(nova_procedure, $5);
   tab_simbolos = insere_simbolos_ts(tab_simbolos, $5);
+  tab_simbolos = insere_simbolo_ts(tab_simbolos, nova_procedure);
   }
   ;
 
@@ -148,12 +147,20 @@ LISTA_DE_PARAMETROS: LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {
   atualiza_tipo_simbolos($1, $3);
   $$ = $1;
   }
-  | VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {  }
+  | VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO { 
+    atualiza_tipo_simbolos($2, $4);
+    atualiza_tipo_simb_simbolos($2, REFERENCIA);
+    $$ = $2;
+  }
   | LISTA_DE_PARAMETROS PONTO_VIRGULA LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {
     atualiza_tipo_simbolos($3, $5);
      $$ = concatena_lista_simbolos($1, $3);
   }
-  | LISTA_DE_PARAMETROS PONTO_VIRGULA VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {}
+  | LISTA_DE_PARAMETROS PONTO_VIRGULA VAR LISTA_DE_IDENTIFICADORES DOIS_PONTOS TIPO {
+    atualiza_tipo_simbolos($4, $6);
+    atualiza_tipo_simb_simbolos($4, REFERENCIA);
+    $$ = concatena_lista_simbolos($1, $4);
+  }
   ;
 
 
@@ -172,7 +179,7 @@ ENUNCIADO: VARIAVEL OPERADOR_ATRIBUICAO EXPRESSAO {
           fprintf(out_file,  "; ENUNCIADO: %s (tipo %d) := %s (tipo %d)\n", $1->lexema, $1->tipo_simb, $3->lexema, $3->tipo_simb);
           materializa_atribuicao(tab_simbolos, out_file, $1, $3, &contador_simbolos);
           }
-         | CHAMADA_DE_PROCEDIMENTO
+         | CHAMADA_DE_PROCEDIMENTO 
          | ENUNCIADO_COMPOSTO
          | IF EXPRESSAO {
           fprintf(out_file, "\tbr i1 %%%d, label %%then_%d, label %%else_%d\n", $2->id_llvm, contador_if, contador_if); 
@@ -215,16 +222,27 @@ VARIAVEL: ID {
           struct expressao *nova;
           if(strcmp(nome_funcao_atual, $1) == 0){
             printf("VARIAVEL DE RETORNO: %s %s\n", $1, nome_funcao_atual);
-            nova = nova_expressao2(tab_simbolos, $1, RETORNO, escopo_atual); // retorno da funcao
+            nova = nova_expressao2(tab_simbolos, $1, RETORNO, escopo_atual, s->tipo); // retorno da funcao
           } 
-          else nova = nova_expressao2(tab_simbolos, $1, s->tipo_simb, s->escopo); // variavel
+          else nova = nova_expressao2(tab_simbolos, $1, s->tipo_simb, s->escopo, s->tipo); // variavel
           nova->id_tabela = tab_simbolos;
           $$ = nova; // variavel ou funcao
         }
         ;
 
-CHAMADA_DE_PROCEDIMENTO: ID
-                    | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES {executar_funcao(out_file, tab_simbolos, $1, $3, &contador_simbolos);}
+CHAMADA_DE_PROCEDIMENTO: ID {
+                      /*buscar na ts se existe simbolo com esse id e se ele é um proc*/
+                      struct simbolo *s = busca_simbolo2(tab_simbolos, $1, PROC);
+                      if(s == NULL) {
+                        fprintf(stderr, "Erro: procedimento %s nao declarado\n", $1);
+                        exit(1);
+                      }
+                      executar_funcao(out_file, tab_simbolos, $1, NULL, &contador_simbolos);
+                      }
+                    | ID ABRE_PARENTESES LISTA_DE_EXPRESSOES FECHA_PARENTESES {
+                      struct simbolo *s = busca_simbolo(tab_simbolos, $1);
+                      executar_funcao(out_file, tab_simbolos, $1, $3, &contador_simbolos);
+                      }
                     ;
 
 LISTA_DE_EXPRESSOES: EXPRESSAO { lista_expressoes_atual = insere_lista_expressoes(NULL, $1);
@@ -268,7 +286,7 @@ FATOR: ID {
         fprintf(stderr, "Erro: variavel %s nao declarada\n", $1);
         exit(1);
       }
-      struct expressao *nova = nova_expressao2(tab_simbolos, $1, s->tipo_simb, s->escopo);
+      struct expressao *nova = nova_expressao2(tab_simbolos, $1, s->tipo_simb, s->escopo, s->tipo);
       nova->id_tabela = tab_simbolos;
       $$ = nova; // variavel ou funcao
       }
@@ -276,7 +294,7 @@ FATOR: ID {
         $$ =  executar_funcao(out_file, tab_simbolos, $1, $3, &contador_simbolos);
       }
      | NUM {
-        struct expressao *nova = nova_expressao2(tab_simbolos, $1, NUMERO, escopo_atual);
+        struct expressao *nova = nova_expressao(tab_simbolos, $1, NUMERO, escopo_atual);
         $$ = nova; // verificar como adicionar o tipo certo
       }
      | ABRE_PARENTESES EXPRESSAO FECHA_PARENTESES {       

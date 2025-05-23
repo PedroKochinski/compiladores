@@ -1,10 +1,13 @@
 program simples (input, output);
 var x,y: integer;
 var z: real;
-function plus (a,b: integer): integer;
+
+procedure plus (a,b: integer);
+var plus: integer;
 begin
     plus := a + b
 end;
+
 begin
     read(x);
     y := 3;
@@ -12,7 +15,7 @@ begin
     x := x + 1;
     x := y * x;
     z := 2 * z;
-    x := plus(x,y);
+    plus(x,y);
     write(x);
     write(y);
     write(z)

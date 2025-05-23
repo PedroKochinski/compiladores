@@ -1,23 +1,23 @@
 program simples (input, output);
-var x,y: integer;
-var z: real;
-function plus (a,b: integer): integer;
+var x, y: integer;
+
+procedure imprime;
 begin
-    plus := a + b
+    write(x)
 end;
-function menos (a,b: integer): integer;
+
+procedure menos (a, b: integer);
+var i: integer;
 begin
-    plus := a + b
+    i := 0;
+   
+    a := a - b
 end;
+
 begin
     read(x);
-    y := 3;
-    z := 4;
-    x := x + 1;
-    x := y * x;
-    z := 2 * z;
-    x := plus(x,y);
-    write(x);
-    write(y);
-    write(z)
+    read(y);
+    menos(x,y);
+    imprime
+
 end.

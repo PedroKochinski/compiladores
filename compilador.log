@@ -5,7 +5,7 @@ VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_llvm = 1; id_funcao = SEM_E
 ---------------
 --------------FIM-TS----------
 --------------TS--------------
-VARIAVEL; lexema = z; escopo = 0; tipo = REAL; id_llvm = 3; id_funcao = SEM_ESCOPO_FUNCAO
+PROCEDURE; lexema = imprime; id_llvm = 3, escopo = 0; tipo = VAZIO; args:{}
 ---------------
 VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO; id_llvm = 2; id_funcao = SEM_ESCOPO_FUNCAO
 ---------------
@@ -13,9 +13,29 @@ VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_llvm = 1; id_funcao = SEM_E
 ---------------
 --------------FIM-TS----------
 --------------TS--------------
-FUNCAO; lexema = plus; id_llvm = 4, escopo = 0; tipo = INTEIRO; args:{a: INTEIRO, b: INTEIRO}
+VARIAVEL; lexema = i; escopo = 1; tipo = INTEIRO; id_llvm = 10; id_funcao = menos
 ---------------
-VARIAVEL; lexema = z; escopo = 0; tipo = REAL; id_llvm = 3; id_funcao = SEM_ESCOPO_FUNCAO
+PROCEDURE; lexema = menos; id_llvm = 7, escopo = 0; tipo = VAZIO; args:{a: INTEIRO, b: INTEIRO}
+---------------
+VARIAVEL; lexema = b; escopo = 1; tipo = INTEIRO; id_llvm = 9; id_funcao = menos
+---------------
+VARIAVEL; lexema = a; escopo = 1; tipo = INTEIRO; id_llvm = 8; id_funcao = menos
+---------------
+PROCEDURE; lexema = imprime; id_llvm = 3, escopo = 0; tipo = VAZIO; args:{}
+---------------
+VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO; id_llvm = 2; id_funcao = SEM_ESCOPO_FUNCAO
+---------------
+VARIAVEL; lexema = x; escopo = 0; tipo = INTEIRO; id_llvm = 1; id_funcao = SEM_ESCOPO_FUNCAO
+---------------
+--------------FIM-TS----------
+--------------TS--------------
+PROCEDURE; lexema = menos; id_llvm = 7, escopo = 0; tipo = VAZIO; args:{a: INTEIRO, b: INTEIRO}
+---------------
+VARIAVEL; lexema = b; escopo = 1; tipo = INTEIRO; id_llvm = 9; id_funcao = menos
+---------------
+VARIAVEL; lexema = a; escopo = 1; tipo = INTEIRO; id_llvm = 8; id_funcao = menos
+---------------
+PROCEDURE; lexema = imprime; id_llvm = 3, escopo = 0; tipo = VAZIO; args:{}
 ---------------
 VARIAVEL; lexema = y; escopo = 0; tipo = INTEIRO; id_llvm = 2; id_funcao = SEM_ESCOPO_FUNCAO
 ---------------

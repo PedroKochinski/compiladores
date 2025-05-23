@@ -3,9 +3,9 @@
 
 #include <ctype.h>
 #include <stdio.h>
-
 #include "compilador.h"
 FILE *fout = NULL;
+
 struct simbolo *novo_simbolo1(char *lexema) {
   struct simbolo *novo = malloc(sizeof(struct simbolo));
   novo->lexema = strdup(lexema);
@@ -45,23 +45,29 @@ struct simbolo *novo_simbolo5(char *lexema, TipoSimbolo tipo_simb, int escopo, c
   return novo;
 }
 
-struct expressao *nova_expressao(char *lexema, TipoSimbolo tipo_simb) {
+struct expressao *nova_expressao(struct tabela_simbolos *ts, char *lexema, TipoSimbolo tipo_simb, int escopo) {
   struct expressao *novo = malloc(sizeof(struct expressao));
-  struct simbolo *novo_simb = novo_simbolo2(lexema, tipo_simb);
   novo->lexema = strdup(lexema);
   novo->tipo_simb = tipo_simb;
+  novo->valor_int = atoi(lexema);
+  novo->valor_float = atof(lexema);
+  novo->escopo = escopo;
   return novo;
 }
 
-struct expressao *nova_expressao2(struct tabela_simbolos *ts, char *lexema,
-                                  TipoSimbolo tipo_simb, int escopo) {
+struct expressao *nova_expressao2(struct tabela_simbolos *ts, char *lexema, TipoSimbolo tipo_simb, int escopo, Tipo tipo) {
   if (tipo_simb == NUMERO) {
     struct expressao *novo = malloc(sizeof(struct expressao));
     novo->lexema = strdup(lexema);
     novo->tipo_simb = tipo_simb;
     novo->valor_int = atoi(lexema);
     novo->valor_float = atof(lexema);
+    // novo->valor_float = 3.1;
+    // if(novo->valor_int == (int)novo->valor_float) 
+    printf("%d %d\n", novo->valor_int, (int)novo->valor_float);
+    // else printf("%d %f\n", novo->valor_int, novo->valor_float);
     novo->escopo = escopo;
+    novo->tipo = tipo;
     return novo;
   }
   struct simbolo *aux = busca_simbolo(ts, lexema);
@@ -80,6 +86,7 @@ struct expressao *nova_expressao2(struct tabela_simbolos *ts, char *lexema,
   novo->lexema = strdup(lexema);
   novo->tipo_simb = tipo_simb;
   novo->escopo = escopo;
+  novo->tipo = tipo;
   return novo;
 }
 
@@ -115,11 +122,49 @@ void materializa_variavel_dinamica(FILE *fp, struct expressao *exp, int *contado
   fprintf(fp, "\t%%%d = load %s, ptr %s%s\n", *contador_simbolos, tipo_var, tipo_ptr,exp->lexema);
   exp->id_llvm = *contador_simbolos;
 }
+void materializa_variavel(FILE *fp, char *buffer, struct expressao *expr, int *contador_simbolos);
+
+void materializa_chamada_funcao(FILE *fp, struct expressao *expr, int *contador_simbolos) {
+  char buffer_args[1000];
+    char *buffer_args_ids = (char *)malloc(1000 * sizeof(char));
+    char *args_func = (char *)malloc(1000 * sizeof(char));
+    char *tipo_arg;
+    int tipo;
+    (*contador_simbolos)++;
+    fprintf(fp, "\t; chamando funcao %s (tipo_simb %d)\n", expr->lexema, expr->tipo_simb);
+    while (expr->args) {
+      // if(expr->args->exp->tipo_simb != REFERENCIA){
+      tipo = expr->args->exp->tipo;
+      if(tipo == INT) tipo_arg = "i32";
+      else if(tipo == FLOAT) tipo_arg = "float";
+      // fprintf(fp, "%s\n", buffer_args);
+      if(expr->args->exp->tipo_simb == REFERENCIA){
+        if(expr->args->exp->escopo == 0) tipo_arg = "@";
+        else tipo_arg = "%";
+        sprintf(buffer_args_ids, "ptr %s%s, ", tipo_arg, expr->args->exp->lexema);
+      } 
+      else{
+        materializa_variavel(fp, buffer_args, expr->args->exp, contador_simbolos);
+        sprintf(buffer_args_ids, "%s %s, ", tipo_arg, buffer_args);
+      } 
+
+      strcat(args_func, buffer_args_ids);
+      expr->args->exp->id_llvm = *contador_simbolos;
+      (*contador_simbolos)++;
+      expr->args = expr->args->proximo;
+      // }
+    }
+    args_func[strlen(args_func) - 2] = '\0'; // remove a ultima virgula
+    if(expr->tipo_simb == PROC){
+    fprintf(fp, "\tcall void @%s(%s)\n", expr->lexema, args_func);
+    }
+    else fprintf(fp, "\t%%%d = call %s @%s(%s)\n", *contador_simbolos, (expr->tipo == INT ? "i32" : "float"), expr->lexema, args_func);
+}
 
 // quando usar para retorno de funcao, o buffer deve ser o que deve ser retornado
 void materializa_variavel(FILE *fp, char *buffer, struct expressao *expr, int *contador_simbolos) {
   fprintf(fp, "\t; materializando variavel %s (tipo_simb %d)\n", expr->lexema, expr->tipo_simb);
-  if (expr->tipo_simb == PONTEIRO || (expr->tipo_simb == VARIAVEL && expr->escopo == 0)) {
+  if ((expr->tipo_simb == PONTEIRO || expr->tipo_simb == REFERENCIA) || (expr->tipo_simb == VARIAVEL && expr->escopo == 0)) {
     materializa_variavel_dinamica(fp, expr, contador_simbolos);
     sprintf(buffer, "%%%d", expr->id_llvm);
   }
@@ -130,28 +175,9 @@ void materializa_variavel(FILE *fp, char *buffer, struct expressao *expr, int *c
   else if (expr->tipo_simb == EXPR_SOMA)
     sprintf(buffer, "%%%d", expr->id_llvm);
 
-  else if (expr->tipo_simb == FUNCAO) {
-    char buffer_args[1000];
-    char *buffer_args_ids = (char *)malloc(1000 * sizeof(char));
-    char *args_func = (char *)malloc(1000 * sizeof(char));
-    char *tipo_arg;
-    (*contador_simbolos)++;
-    fprintf(fp, "\t; chamando funcao %s\n", expr->lexema);
-    while (expr->args) {
-      int tipo_simb = expr->args->exp->tipo_simb;
-      if(tipo_simb == INT) tipo_arg = "i32";
-      else if(tipo_simb == FLOAT) tipo_arg = "float";
-      materializa_variavel(fp, buffer_args, expr->args->exp, contador_simbolos);
-      // fprintf(fp, "%s\n", buffer_args);
-      sprintf(buffer_args_ids, "%s %s, ", expr->args->exp->tipo == INT ? "i32" : "float", buffer_args);
-      strcat(args_func, buffer_args_ids);
-      expr->args->exp->id_llvm = *contador_simbolos;
-      (*contador_simbolos)++;
-      expr->args = expr->args->proximo;
-    }
-    args_func[strlen(args_func) - 2] = '\0'; // remove a ultima virgula
-    fprintf(fp, "\t%%%d = call %s @%s(%s)\n", *contador_simbolos, (expr->tipo == INT ? "i32" : "float"), expr->lexema, args_func);
-    sprintf(buffer, "%%%d", *contador_simbolos);
+  else if (expr->tipo_simb == FUNCAO || expr->tipo_simb == PROC) {
+    materializa_chamada_funcao(fp, expr, contador_simbolos);
+    sprintf(buffer, "%%%d", expr->id_llvm);
   }
 
   else if (expr->tipo_simb == RETORNO) {
@@ -160,11 +186,19 @@ void materializa_variavel(FILE *fp, char *buffer, struct expressao *expr, int *c
   }
 }
 
-void materializa_atribuicao(struct tabela_simbolos *ts, FILE *fp, struct expressao *esq, struct expressao *dir,
-                            int *contador_simbolos) {
+void materializa_atribuicao(struct tabela_simbolos *ts, FILE *fp, struct expressao *esq, struct expressao *dir, int *contador_simbolos) {
+  
+  if(dir->tipo_simb == NUMERO) dir->tipo = esq->tipo;
+
   if (esq->tipo != dir->tipo) {
     char erro[500];
     sprintf(erro, "atribuição entre tipos diferentes");
+    yyerror(erro);
+    exit(1);
+  }
+  if(esq->tipo_simb == FUNCAO){
+    char erro[500];
+    sprintf(erro, "atribuição de função não permitida");
     yyerror(erro);
     exit(1);
   }
@@ -172,10 +206,11 @@ void materializa_atribuicao(struct tabela_simbolos *ts, FILE *fp, struct express
   char buffer_esq[1000];
   char buffer_dir[1000];
   char *tipo_var = esq->tipo == INT ? "i32" : "float";
+  printf("%s %d\n", esq->lexema, esq->tipo);
   char *tipo_ptr = esq->escopo == 0 ? "@" : "%";
-    materializa_variavel(fp, buffer_dir, dir, contador_simbolos);
-    sprintf(buffer_llvm, "\tstore %s %s, ptr %s%s\n", tipo_var, buffer_dir, tipo_ptr, esq->lexema);
-    fprintf(fp, "%s\n", buffer_llvm);
+  materializa_variavel(fp, buffer_dir, dir, contador_simbolos);
+  sprintf(buffer_llvm, "\tstore %s %s, ptr %s%s\n", tipo_var, buffer_dir, tipo_ptr, esq->lexema);
+  fprintf(fp, "%s\n", buffer_llvm);
   
 }
 
@@ -215,6 +250,9 @@ struct expressao *nova_expressao_operador_aditivo_e_multiplicativo(FILE *fp, str
   char buffer_esq[1000];
   char buffer_dir[1000];
 
+  if(dir->tipo_simb == NUMERO || esq->tipo_simb != NUMERO) dir->tipo = esq->tipo;
+  else if(esq->tipo_simb == NUMERO || dir->tipo_simb != NUMERO) esq->tipo = dir->tipo;
+  
   if (esq->tipo != dir->tipo) {
     char erro[500];
     sprintf(erro, "operacao '%s' entre tipos diferentes", operador);
@@ -392,21 +430,40 @@ struct expressao *executar_funcao(FILE *fp, struct tabela_simbolos *ts, char *fu
   else tratar_erro_funcao(ts, func_id, args);
   struct simbolo *funcao = busca_simbolo(ts, func_id);
   struct expressao *novo = malloc(sizeof(struct expressao));
-  // while(args){
-  //   printf("args %s\n", args->exp->lexema);
-  //   args = args->proximo;
-  // }
+  struct lista_args *aux = funcao->args;
+  struct lista_expressoes *new_args = args;
+  while (aux){
+    args->exp->tipo_simb = aux->tipo_simb;
+    aux = aux->proximo;
+    args = args->proximo;
+  }
+  
   novo->lexema = strdup(func_id);
-  novo->tipo_simb = FUNCAO;
+  novo->tipo_simb = funcao->tipo_simb;
   novo->tipo = funcao->tipo;
-  novo->args = args;
+  novo->args = new_args;
   novo->escopo = funcao->escopo;
+  materializa_chamada_funcao(fp, novo, contador_simbolos);
   return novo;
 }
 
 void atualiza_tipo_simbolos(struct lista_simbolo *lista, Tipo t) {
   while (lista != NULL) {
     lista->simb->tipo = t;
+    lista = lista->proximo;
+  }
+}
+
+void atualiza_tipo_simb_simbolos(struct lista_simbolo *lista, TipoSimbolo t) {
+  while (lista != NULL) {
+    lista->simb->tipo_simb = t;
+    lista = lista->proximo;
+  }
+}
+
+void atualiza_tipo_simb_expr(struct lista_expressoes *lista, TipoSimbolo t) {
+  while (lista != NULL) {
+    lista->exp->tipo_simb = t;
     lista = lista->proximo;
   }
 }
@@ -471,7 +528,6 @@ struct simbolo *busca_simbolo2(struct tabela_simbolos *ts, char *lexema, TipoSim
       return ts->simb;
     ts = ts->proximo;
   }
-  printf("nao achou %s\n", lexema);
   return NULL;
 }
 
@@ -491,8 +547,10 @@ void insere_func_args(struct simbolo *funcao, struct lista_simbolo *args) {
   while (args != NULL) {
     novo = malloc(sizeof(struct lista_args));
     novo->tipo = args->simb->tipo;
+    novo->tipo_simb = args->simb->tipo_simb;
     novo->lexema = strdup(args->simb->lexema);
     novo->proximo = NULL;
+    novo->escopo = args->simb->escopo;
     if (funcao->args == NULL)
       funcao->args = novo;
     else
@@ -512,9 +570,6 @@ void imprime_tipo(FILE *fp, Tipo tipo) {
     break;
   case VAZIO:
     fprintf(fp, "VAZIO");
-    break;
-  case REFERENCIA:
-    fprintf(fp, "REFERENCIA");
     break;
   }
 }
@@ -579,69 +634,62 @@ void imprime_lista_simbolos(FILE *fp, struct lista_simbolo *lista) {
   fprintf(fp, "--------------FIM-LISTA SIMBOLOS----------\n");
 }
 
-void materializa_funcao(FILE *fp, struct lista_simbolo *args,
-                        struct simbolo *funcao, int *contador_simbolos) {
+void materializa_funcao(FILE *fp, struct lista_simbolo *args, struct simbolo *funcao, int *contador_simbolos) {
   (*contador_simbolos)++;
   funcao->id_llvm = *contador_simbolos;
-  struct lista_simbolo aux = *args;
-  if (funcao->tipo_simb == FUNCAO) {
-    if (funcao->tipo == INT) {
+  struct lista_simbolo *aux = args;
+  if (funcao->tipo_simb == FUNCAO || funcao->tipo_simb == PROC) {
+    if(funcao->tipo == VAZIO) {
+      fprintf(fp, "define void @%s(", funcao->lexema);
+    } else if (funcao->tipo == INT) {
       fprintf(fp, "define i32 @%s(", funcao->lexema);
-      while (args != NULL) {
-        (*contador_simbolos)++;
-        args->simb->id_llvm = *contador_simbolos;
-        args->simb->tipo_simb = PONTEIRO;
-        fprintf(fp, "%s %%%d",
-                args->simb->tipo == INT ? "i32" : "float",
-                args->simb->id_llvm);
-        args = args->proximo;
-        if (args != NULL)
-          fprintf(fp, ", ");
-      }
-      fprintf(fp, ") {\nentry:\n");
     } else if (funcao->tipo == FLOAT) {
       fprintf(fp, "define float @%s(", funcao->lexema);
+    }
       while (args != NULL) {
         (*contador_simbolos)++;
         args->simb->id_llvm = *contador_simbolos;
-        args->simb->tipo_simb = PONTEIRO;
-        fprintf(fp, "%s %%%d",
-                args->simb->tipo == INT ? "i32" : "float",
-                args->simb->id_llvm);
+        if(args->simb->tipo_simb == REFERENCIA){
+          fprintf(fp, "ptr %%%s", args->simb->lexema);
+        }else{
+          fprintf(fp, "%s %%%d", args->simb->tipo == INT ? "i32" : "float", args->simb->id_llvm);
+          args->simb->tipo_simb = PONTEIRO;
+        }
         args = args->proximo;
         if (args != NULL)
           fprintf(fp, ", ");
       }
       fprintf(fp, ") {\n");
-    }
   }
-  args = &aux;
+  
+  if(aux != NULL) {
+    args = aux;
+  }
+  
   while (args != NULL) {
-    fprintf(fp, "\t%%%s = alloca %s\n", args->simb->lexema,
-            args->simb->tipo == INT ? "i32" : "float");
-    fprintf(fp, "\tstore %s %%%d, ptr %%%s\n",
-            args->simb->tipo == INT ? "i32" : "float", args->simb->id_llvm,
-            args->simb->lexema);
+    printf("materializando %s\n", args->simb->lexema);
+    if(args->simb->tipo_simb != REFERENCIA){
+      fprintf(fp, "\t%%%s = alloca %s\n", args->simb->lexema, args->simb->tipo == INT ? "i32" : "float");
+      fprintf(fp, "\tstore %s %%%d, ptr %%%s\n",args->simb->tipo == INT ? "i32" : "float", args->simb->id_llvm, args->simb->lexema);
+    }
     args = args->proximo;
   }
-  fprintf(fp, "\t%%%s = alloca %s\n", funcao->lexema,
-          funcao->tipo == INT ? "i32" : "float");
+  if(funcao->tipo_simb == FUNCAO){
+    fprintf(fp, "\t%%%s = alloca %s\n", funcao->lexema, funcao->tipo == INT ? "i32" : "float");
+  }
   fprintf(fp, "\n");
+
 }
 
-void materializa_simbolos(FILE *fp, struct lista_simbolo *lista,
-                          int *contador_simbolos) {
+void materializa_simbolos(FILE *fp, struct lista_simbolo *lista, int *contador_simbolos) {
   while (lista != NULL) {
     (*contador_simbolos)++;
     if (lista->simb->tipo_simb == VARIAVEL) {
-      if (lista->simb->escopo ==
-          0) { // variavel global alocada dinamicamente
-        fprintf(fp, "@%s = global %s\n", lista->simb->lexema,
-                lista->simb->tipo == INT ? "i32" : "float");
+      if (lista->simb->escopo == 0) { // variavel global alocada dinamicamente
+        fprintf(fp, "@%s = global %s\n", lista->simb->lexema, lista->simb->tipo == INT ? "i32" : "float");
         lista->simb->id_llvm = *contador_simbolos;
       } else { // variavel local
-        fprintf(fp, "\t%%%s = alloca %s\n", lista->simb->lexema,
-                lista->simb->tipo == INT ? "i32" : "float");
+        fprintf(fp, "\t%%%s = alloca %s\n", lista->simb->lexema, lista->simb->tipo == INT ? "i32" : "float");
         lista->simb->id_llvm = *contador_simbolos;
       }
     } else // retorno da funcao
@@ -652,8 +700,7 @@ void materializa_simbolos(FILE *fp, struct lista_simbolo *lista,
   }
 }
 
-void materializa_simbolos_globais(FILE *fp, struct lista_simbolo *lista,
-                                  int *contador_simbolos) {
+void materializa_simbolos_globais(FILE *fp, struct lista_simbolo *lista, int *contador_simbolos) {
   while (lista != NULL) {
     (*contador_simbolos)++;
     if (lista->simb->escopo == 0) { // variavel global alocada dinamicamente
